@@ -1,0 +1,418 @@
+{
+  "info": {
+    "name": "Physics School API",
+    "description": "API collection for Physics School platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register Init",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"phone\": \"+976-9999-9999\",\n  \"email\": \"john@example.com\",\n  \"grade\": \"10\",\n  \"goals\": [\"Improve physics grades\", \"Prepare for EESH\"],\n  \"password\": \"securepassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register-init",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register-init"]
+            }
+          }
+        },
+        {
+          "name": "Complete Registration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placementSessionId\": \"placement_1234567890_abc123\",\n  \"placementResults\": {\n    \"totalScore\": 75,\n    \"levelEstimate\": \"L3\",\n    \"weakTopics\": [\"kinematics\", \"forces\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/complete-registration",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "complete-registration"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"securepassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tests",
+      "item": [
+        {
+          "name": "Get Placement Test",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tests/placement?grade=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tests", "placement"],
+              "query": [
+                {
+                  "key": "grade",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit Test Attempt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"testId\": \"test_id_here\",\n  \"placementSessionId\": \"placement_session_id_here\",\n  \"answers\": [\n    {\n      \"questionId\": \"q1\",\n      \"answer\": \"A\"\n    },\n    {\n      \"questionId\": \"q2\",\n      \"answer\": 42\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tests/attempt",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tests", "attempt"]
+            }
+          }
+        },
+        {
+          "name": "Get Retest Schedule",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tests/retest/schedule",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tests", "retest", "schedule"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lessons",
+      "item": [
+        {
+          "name": "Get Lessons",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lessons?grade=10&topics=kinematics&difficulty=3&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lessons"],
+              "query": [
+                {
+                  "key": "grade",
+                  "value": "10"
+                },
+                {
+                  "key": "topics",
+                  "value": "kinematics"
+                },
+                {
+                  "key": "difficulty",
+                  "value": "3"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Lesson by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lessons/lesson_id_here",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lessons", "lesson_id_here"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Recommendations",
+      "item": [
+        {
+          "name": "Get Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations"]
+            }
+          }
+        },
+        {
+          "name": "Recompute Recommendations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user_id_here\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations/recompute",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations", "recompute"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Create Payment Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 50000,\n  \"currency\": \"MNT\",\n  \"planId\": \"monthly_premium\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/session",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "session"]
+            }
+          }
+        },
+        {
+          "name": "Get Payment Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/status/session_id_here",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "status", "session_id_here"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Create Lesson",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Advanced Kinematics\",\n  \"slug\": \"advanced-kinematics\",\n  \"grade\": \"12\",\n  \"topics\": [\"kinematics\", \"calculus\"],\n  \"difficulty\": 5,\n  \"type\": \"video\",\n  \"contentUrl\": \"https://example.com/video\",\n  \"isPublished\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/lessons",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "lessons"]
+            }
+          }
+        },
+        {
+          "name": "Create Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stem\": \"What is the acceleration of a falling object?\",\n  \"kind\": \"mcq\",\n  \"options\": [\n    { \"id\": \"a\", \"text\": \"9.8 m/s²\", \"isCorrect\": true },\n    { \"id\": \"b\", \"text\": \"9.8 m/s\", \"isCorrect\": false },\n    { \"id\": \"c\", \"text\": \"0 m/s²\", \"isCorrect\": false },\n    { \"id\": \"d\", \"text\": \"Depends on mass\", \"isCorrect\": false }\n  ],\n  \"answerKey\": \"a\",\n  \"topics\": [\"kinematics\", \"gravity\"],\n  \"difficulty\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "questions"]
+            }
+          }
+        },
+        {
+          "name": "Create Test",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"topic\",\n  \"title\": \"Kinematics Quiz\",\n  \"description\": \"Test your understanding of kinematics\",\n  \"gradeRange\": [\"10\", \"11\", \"12\"],\n  \"topics\": [\"kinematics\"],\n  \"timeLimitSec\": 1800,\n  \"questionRefs\": [\n    {\n      \"questionId\": \"question_id_here\",\n      \"weight\": 1,\n      \"difficulty\": 3\n    }\n  ],\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "tests"]
+            }
+          }
+        },
+        {
+          "name": "Get Admin Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/stats/overview",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "stats", "overview"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "Payment Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-QPay-Signature",
+                "value": "webhook_signature_here"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_id\": \"invoice_123\",\n  \"status\": \"paid\",\n  \"amount\": 50000,\n  \"currency\": \"MNT\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "webhooks", "payments"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/healthz",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "healthz"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    }
+  ]
+}

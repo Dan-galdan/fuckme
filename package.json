@@ -1,0 +1,25 @@
+{
+  "name": "physics-school-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "build": "pnpm --filter shared build && pnpm --filter backend build && pnpm --filter frontend build",
+    "test": "pnpm --filter backend test && pnpm --filter frontend test",
+    "lint": "pnpm --filter backend lint && pnpm --filter frontend lint",
+    "clean": "pnpm --filter backend clean && pnpm --filter frontend clean"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  },
+  "workspaces": [
+    "frontend",
+    "backend",
+    "shared"
+  ],
+  "dependencies": {
+    "mongodb": "^6.20.0"
+  }
+}
