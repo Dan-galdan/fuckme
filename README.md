@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Physics School - Full-Stack Learning Platform
 
 A comprehensive physics learning platform built with React, TypeScript, Fastify, and MongoDB. Features adaptive placement testing, personalized recommendations, and subscription-based access to physics lessons from grade 6 to EESH preparation.
@@ -416,3 +417,6 @@ This project is licensed under the MIT License.
 - Review the API documentation
 - Test with mock payment provider first
 - Ensure all environment variables are set correctly
+=======
+# fuckme
+>>>>>>> 3bf5fcfee5b667c5aa347bfc5931e019c8a8336e
