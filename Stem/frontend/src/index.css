@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Mulish", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  background-image: linear-gradient(135deg, #2A4A59, #29334F);
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  width: 100%;
+  min-height: 100vh;
+  transition: background-image 1s ease;
+}
+
+/* Add padding for screens larger than small breakpoint (sm) */
+
+* {
+  @apply transition-colors duration-200;
+  @apply transition-opacity duration-200;
+  @apply transition-transform duration-200;
+  transition: background-image 800ms ease;
+}
+
+/* Custom animations for enhanced cards */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
