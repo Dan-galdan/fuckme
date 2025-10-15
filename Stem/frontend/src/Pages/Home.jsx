@@ -6,8 +6,181 @@ import { experiments } from '../Datas/Experiments'
 import { hicheel } from '../Datas/Hicheel'
 import PhoneHeader from '../components/Header/phoneHeader'
 import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react' // Add this import
 
-// Enhanced inline icons
+// Admin Panel Component - Add this new component
+function AdminPanel({ onClose }) {
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    name: '',
+    phone: ''
+  });
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage('');
+
+    try {
+      if (isLogin) {
+        // Admin login
+        const response = await fetch('http://localhost:4000/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password
+          })
+        });
+
+        if (response.ok) {
+          setMessage('✅ Admin login successful!');
+          setTimeout(() => onClose(), 1500);
+        } else {
+          setMessage('❌ Login failed. Check credentials.');
+        }
+      } else {
+        // Admin registration
+        const response = await fetch('http://localhost:4000/api/auth/register-init', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            phone: formData.phone,
+            email: formData.email,
+            grade: 'EESH',
+            goals: ['admin'],
+            password: formData.password
+          })
+        });
+
+        if (response.ok) {
+          setMessage('✅ Admin registration initiated! Check terminal for placement session.');
+        } else {
+          const error = await response.json();
+          setMessage(`❌ Registration failed: ${error.message}`);
+        }
+      }
+    } catch (error) {
+      setMessage('❌ Network error. Check if server is running.');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {isLogin ? 'Admin Login' : 'Create Admin'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                  placeholder="Admin User"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                  placeholder="+976-9999-9999"
+                />
+              </div>
+            </>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+              placeholder="admin@physics-school.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              required
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+              placeholder="••••••••"
+            />
+          </div>
+
+          {message && (
+            <div className={`p-3 rounded-lg text-sm ${message.includes('✅')
+              ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+              : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+              }`}>
+              {message}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+          >
+            {isLogin ? 'Login as Admin' : 'Create Admin Account'}
+          </button>
+        </form>
+
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
+          >
+            {isLogin ? 'Need to create admin account?' : 'Already have admin account?'}
+          </button>
+        </div>
+
+        <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+          <p className="text-yellow-800 dark:text-yellow-400 text-xs">
+            💡 For instant admin access, run: <code className="bg-black/10 px-1 rounded">npm run seed:admin</code> in backend
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Enhanced inline icons (your existing icons)
 const IconPlay = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current" aria-hidden>
     <path d="M8 5v14l11-7z" />
@@ -32,7 +205,7 @@ const IconMath = () => (
   </svg>
 );
 
-// Enhanced Hero Section Component
+// Enhanced Hero Section Component (your existing component)
 function EnhancedHero() {
   return (
     <section className="relative overflow-hidden">
@@ -45,7 +218,7 @@ function EnhancedHero() {
               backgroundRepeat: 'repeat'
             }}></div>
           </div>
-          
+
           <div className="relative px-6 py-16 sm:px-12 sm:py-24 lg:px-16 lg:py-32">
             <div className="max-w-4xl">
               <div className="mb-8">
@@ -63,7 +236,7 @@ function EnhancedHero() {
                   2024–2025 хичээлийн жилийн шинэчлэгдсэн контент. Дасгал, сорил, видео тайлбар.
                 </p>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
                   to="/physic"
@@ -81,7 +254,7 @@ function EnhancedHero() {
               </div>
             </div>
           </div>
-          
+
           {/* Floating elements */}
           <div className="absolute top-10 right-10 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-emerald-400/20 rounded-full blur-xl"></div>
           <div className="absolute bottom-10 left-10 w-32 h-32 bg-gradient-to-br from-emerald-400/20 to-blue-400/20 rounded-full blur-xl"></div>
@@ -91,7 +264,7 @@ function EnhancedHero() {
   );
 }
 
-// Enhanced Section Header Component
+// Enhanced Section Header Component (your existing component)
 function SectionHeader({ title, subtitle, linkText, linkTo }) {
   return (
     <div className="flex items-end justify-between mb-8">
@@ -100,8 +273,8 @@ function SectionHeader({ title, subtitle, linkText, linkTo }) {
         {subtitle && <p className="text-slate-500 dark:text-gray-400 text-lg">{subtitle}</p>}
       </div>
       {linkText && linkTo && (
-        <Link 
-          to={linkTo} 
+        <Link
+          to={linkTo}
           className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors duration-200 hover:underline"
         >
           {linkText} →
@@ -111,7 +284,7 @@ function SectionHeader({ title, subtitle, linkText, linkTo }) {
   );
 }
 
-// Enhanced Experiment Card Component
+// Enhanced Experiment Card Component (your existing component)
 function EnhancedExperimentCard({ id, title, description, path }) {
   return (
     <Link
@@ -128,15 +301,15 @@ function EnhancedExperimentCard({ id, title, description, path }) {
             animation: 'float 6s ease-in-out infinite'
           }}></div>
         </div>
-        
+
         {/* Floating icon */}
         <div className="absolute top-4 right-4 p-3 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 group-hover:bg-white/30 transition-all duration-300">
           <IconAtom />
         </div>
-        
+
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-        
+
         {/* Card title overlay */}
         <div className="absolute bottom-4 left-4 right-4">
           <div className="text-xs inline-flex items-center px-3 py-1.5 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm text-emerald-700 dark:text-emerald-400 font-semibold shadow-sm">
@@ -144,13 +317,13 @@ function EnhancedExperimentCard({ id, title, description, path }) {
           </div>
         </div>
       </div>
-      
+
       {/* Card Content */}
       <div className="p-6 flex flex-col flex-1">
         <h3 className="font-bold text-slate-900 dark:text-white text-xl mb-3 group-hover:text-blue-600 dark:group-hover:text-gray-300 transition-colors duration-300 line-clamp-2">
           {title}
         </h3>
-        
+
         {/* Fixed height description area */}
         <div className="flex-1 mb-4 min-h-[4rem]">
           {description ? (
@@ -161,7 +334,7 @@ function EnhancedExperimentCard({ id, title, description, path }) {
             <div className="h-16"></div>
           )}
         </div>
-        
+
         {/* Action area - fixed at bottom */}
         <div className="flex items-center justify-between pt-2 mt-auto">
           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400">
@@ -176,10 +349,10 @@ function EnhancedExperimentCard({ id, title, description, path }) {
           </div>
         </div>
       </div>
-      
+
       {/* Hover effect overlay */}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-      
+
       {/* Shine effect */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
         <div className="absolute -top-1 -left-1 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
@@ -188,7 +361,7 @@ function EnhancedExperimentCard({ id, title, description, path }) {
   );
 }
 
-// Enhanced Exam Card Component
+// Enhanced Exam Card Component (your existing component)
 function EnhancedExamCard({ id, title, path }) {
   const getIcon = () => {
     if (title.includes('Физик')) return <IconAtom />;
@@ -241,15 +414,15 @@ function EnhancedExamCard({ id, title, path }) {
             animation: 'float 8s ease-in-out infinite'
           }}></div>
         </div>
-        
+
         {/* Icon */}
         <div className={`absolute top-4 right-4 p-3 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 group-hover:bg-white/30 transition-all duration-300 ${getIconColor()}`}>
           {getIcon()}
         </div>
-        
+
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-        
+
         {/* Subject tag */}
         <div className="absolute bottom-4 left-4">
           <div className={`text-xs inline-flex items-center px-3 py-1.5 rounded-full backdrop-blur-sm font-semibold shadow-sm ${getTagBg()}`}>
@@ -257,20 +430,20 @@ function EnhancedExamCard({ id, title, path }) {
           </div>
         </div>
       </div>
-      
+
       {/* Card Content */}
       <div className="p-6 flex flex-col flex-1">
         <h3 className="font-bold text-slate-900 dark:text-white text-xl mb-3 group-hover:text-blue-600 dark:group-hover:text-gray-300 transition-colors duration-300 line-clamp-2">
           {title}
         </h3>
-        
+
         {/* Fixed height description area */}
         <div className="flex-1 mb-4 min-h-[4rem]">
           <p className="text-slate-600 dark:text-gray-300 text-sm leading-relaxed">
             Жишиг даалгавар, тайлбаруудтай.
           </p>
         </div>
-        
+
         {/* Action area - fixed at bottom */}
         <div className="flex items-center justify-between pt-2 mt-auto">
           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400">
@@ -285,10 +458,10 @@ function EnhancedExamCard({ id, title, path }) {
           </div>
         </div>
       </div>
-      
+
       {/* Hover effect overlay */}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-      
+
       {/* Shine effect */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
         <div className="absolute -top-1 -left-1 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
@@ -302,6 +475,30 @@ function Home() {
   const lastThreeExperiments = experiments.slice(-3);
   const lastThreehicheel = hicheel.slice(-3);
 
+  // Add admin panel state
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [adminKeys, setAdminKeys] = useState([]);
+
+  // Add keyboard listener for "admin" sequence
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      // Check for "ADMIN" sequence (case insensitive)
+      const newKeys = [...adminKeys, event.key.toLowerCase()];
+      if (newKeys.length > 5) newKeys.shift(); // Keep only last 5 keys
+
+      setAdminKeys(newKeys);
+
+      // Check if sequence is "admin"
+      if (newKeys.join('') === 'admin') {
+        setShowAdminPanel(true);
+        setAdminKeys([]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [adminKeys]);
+
   return (
     <div className="w-full transition-colors duration-500 bg-gradient-to-b from-slate-50 to-white dark:bg-gradient-to-b dark:from-gray-900 dark:to-black relative min-h-screen z-10">
       {/* Enhanced Hero Section */}
@@ -311,9 +508,9 @@ function Home() {
 
       {/* Enhanced Experiments Section */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        <SectionHeader 
-          title="Шинэ туршилтууд" 
-          subtitle="энэ сард" 
+        <SectionHeader
+          title="Шинэ туршилтууд"
+          subtitle="энэ сард"
           linkText="Бүгдийг үзэх"
           linkTo="/physic"
         />
@@ -332,8 +529,8 @@ function Home() {
 
       {/* Enhanced EYSH Section */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        <SectionHeader 
-          title="Шинэ ЭЕШ-ийн хичээлүүд" 
+        <SectionHeader
+          title="Шинэ ЭЕШ-ийн хичээлүүд"
           linkText="Бүгдийг үзэх"
           linkTo="/physic/EYSH_beltgel"
         />
@@ -352,8 +549,13 @@ function Home() {
       {/* Spacing between cards and footer */}
       <div className="h-16 sm:h-24"></div>
 
-      <Footer/>
-      <PhoneFooter/>
+      {/* Admin Panel */}
+      {showAdminPanel && (
+        <AdminPanel onClose={() => setShowAdminPanel(false)} />
+      )}
+
+      <Footer />
+      <PhoneFooter />
     </div>
   )
 }
