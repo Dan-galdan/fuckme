@@ -1,20 +1,20 @@
 import { useState } from 'react';
-import home from '/home.svg';
-import physic from '/physic.svg';
-import chemistry from '/chemistry.svg';
-import market from '/market.svg';
-import homeActive from '/homeActive.svg';
-import physicActive from '/physicActive.svg';
-import chemistryActive from '/chemistryActive.svg';
-import marketActive from '/marketActive.svg';
-import search from '/search.svg';
-import searchActive from '/searchActive.svg'
+import home from '../../assets/home.svg';
+import physic from '../../assets/physic.svg';
+import chemistry from '../../assets/chemistry.svg';
+import market from '../../assets/market.svg';
+import homeActive from '../../assets/homeActive.svg';
+import physicActive from '../../assets/physicActive.svg';
+import chemistryActive from '../../assets/chemistryActive.svg';
+import marketActive from '../../assets/marketActive.svg';
+import search from '../../assets/search.svg';
+import searchActive from '../../assets/searchActive.svg'
 import { Link, useLocation } from 'react-router-dom';
 
 // Enhanced icons for better visual consistency
 const HomeIcon = ({ isActive }) => (
   <svg className={`w-6 h-6 ${isActive ? 'text-white' : 'text-slate-600 dark:text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
   </svg>
 );
 
@@ -26,10 +26,10 @@ const SearchIcon = ({ isActive }) => (
 
 const PhysicIcon = ({ isActive }) => (
   <svg className={`w-6 h-6 ${isActive ? 'text-white' : 'text-slate-600 dark:text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
-    <circle cx="12" cy="12" r="2" strokeWidth="1.5"/>
-    <ellipse cx="12" cy="12" rx="10" ry="4.5" strokeWidth="1.5"/>
-    <ellipse cx="12" cy="12" rx="4.5" ry="10" transform="rotate(60 12 12)" strokeWidth="1.5"/>
-    <ellipse cx="12" cy="12" rx="4.5" ry="10" transform="rotate(-60 12 12)" strokeWidth="1.5"/>
+    <circle cx="12" cy="12" r="2" strokeWidth="1.5" />
+    <ellipse cx="12" cy="12" rx="10" ry="4.5" strokeWidth="1.5" />
+    <ellipse cx="12" cy="12" rx="4.5" ry="10" transform="rotate(60 12 12)" strokeWidth="1.5" />
+    <ellipse cx="12" cy="12" rx="4.5" ry="10" transform="rotate(-60 12 12)" strokeWidth="1.5" />
   </svg>
 );
 
@@ -90,12 +90,10 @@ function NavBar() {
               className="flex flex-col text-center w-full h-full group"
             >
               <span
-                className={`text-xl cursor-pointer transition-all duration-500 ease-in-out flex flex-col justify-center items-center h-full ${
-                  i === activeIndex && "-mt- text-white"
-                }`}
+                className={`text-xl cursor-pointer transition-all duration-500 ease-in-out flex flex-col justify-center items-center h-full ${i === activeIndex && "-mt- text-white"
+                  }`}
               >
-                <div className={`scale-110 mt-2 transition-all duration-500 ease-in-out ${
-                    i === activeIndex && "-translate-y-6"
+                <div className={`scale-110 mt-2 transition-all duration-500 ease-in-out ${i === activeIndex && "-translate-y-6"
                   }`}>
                   {i === activeIndex ? (
                     <tab.component isActive={true} />
@@ -104,11 +102,10 @@ function NavBar() {
                   )}
                 </div>
                 <span
-                  className={`transition-all text-slate-300 dark:text-gray-400 duration-500 ease-in-out font-medium ${
-                    activeIndex === i
-                      ? "translate-y-2 opacity-100 text-white"
-                      : "translate-y-10 opacity-0"
-                  }`}
+                  className={`transition-all text-slate-300 dark:text-gray-400 duration-500 ease-in-out font-medium ${activeIndex === i
+                    ? "translate-y-2 opacity-100 text-white"
+                    : "translate-y-10 opacity-0"
+                    }`}
                 >
                   {tab.name}
                 </span>

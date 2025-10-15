@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import bookmarkStroke from '/bookmarkStroke.svg';
-import bookmark from '/bookmark.svg';
+import bookmarkStroke from '../assets/bookmark-stroke.svg';
+import bookmark from '../assets/bookmark.svg';
 import PhoneFooter from '../components/phoneFooter'
 import Footer from '../components/Footer';
 import PhoneHeader from '../components/Header/phoneHeader'
@@ -22,10 +22,10 @@ function ItemTemplate({ items }) {
   function save() {
     // Get existing data from localStorage and ensure it's an array
     let existingItems = JSON.parse(localStorage.getItem("items")) || [];
-    
+
     // Check if item already exists in the array
     const isExisting = existingItems.some(savedItem => savedItem.name === item.name);
-    
+
     if (!isExisting) {
       // Add new item to the existing data array
       const newData = [...existingItems, { ...item }];
@@ -49,25 +49,25 @@ function ItemTemplate({ items }) {
 
   return (
     <div className="w-full pb-96 relative dark:text-white text-black sm:pb-48 min-h-screen flex flex-col items-center pt-12 -mt-[50px]  transition-colors duration-500 bg-[#FDFDFD] dark:bg-gradient-to-b dark:from-[#101214] dark:from-20% dark:to-[#1B1D20] dark:to-80%">
-      
+
       {/* Back button */}
       <div className='w-10/12 mb-8 mt-10 flex flex-row justify-center items-center'>
         <button onClick={() => navigate(-1)} className="w-2/12 flex items-center">
           <div className='w-10 h-10 rounded-full bg-[#5B93FF] flex items-center justify-center'>
-            <img src="/leftArrow.svg" alt="leftArrow"/>
+            <img src="/leftArrow.svg" alt="leftArrow" />
           </div>
         </button>
         <h2 className="text-3xl w-10/12 font-bold">{item.title}</h2>
-        
-        <img 
+
+        <img
           src={isBookmarked ? bookmark : bookmarkStroke} // Use bookmark icon if saved
-          alt="bookmark" 
+          alt="bookmark"
           onClick={() => save()} // Call save function on click
         />
       </div>
       {/* Title */}
       <div className="max-w-2xl sm:w-full w-5/6 mb-8">
-        <img src={item.img} alt={item.title} className='w-full rounded-lg'/>
+        <img src={item.img} alt={item.title} className='w-full rounded-lg' />
       </div>
       <div className='max-w-2xl sm:w-full w-5/6 mb-8 text-black bg-white p-6 rounded shadow-lg flex flex-row'>
         <h1 className='text-2xl font-bold'>Үнэ:</h1>
@@ -88,7 +88,7 @@ function ItemTemplate({ items }) {
         <p>{item.description}</p>
       </div>
 
-      <Footer/><PhoneFooter/>
+      <Footer /><PhoneFooter />
     </div>
   );
 }

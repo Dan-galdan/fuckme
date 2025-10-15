@@ -4,8 +4,8 @@ import Header from '../components/Header/Header'
 import PhoneFooter from '../components/phoneFooter'
 import Footer from '../components/Footer'
 import PhoneHeader from '../components/Header/phoneHeader'
-import bookmarkStroke from '/bookmarkStroke.svg'
-import bookmark from '/bookmark.svg'
+import bookmarkStroke from '../assets/bookmark-stroke.svg'
+import bookmark from '../assets/bookmark.svg'
 
 function ExperimentTemplate({ experiments }) {
   const navigate = useNavigate();
@@ -23,10 +23,10 @@ function ExperimentTemplate({ experiments }) {
   function save() {
     // Get existing data from localStorage and ensure it's an array
     let existingExperiment = JSON.parse(localStorage.getItem("experiments")) || [];
-    
+
     // Check if experiment already exists in the array
     const isExisting = existingExperiment.some(item => item.name === experiment.name);
-    
+
     if (!isExisting) {
       // Add new experiment to the existing data array
       const newData = [...existingExperiment, { ...experiment }];
@@ -42,25 +42,25 @@ function ExperimentTemplate({ experiments }) {
     }
   }
 
-  return ( 
+  return (
     <div className="w-full pb-96 relative sm:pb-48 min-h-screen flex flex-col items-center pt-12 -mt-[50px]  transition-colors duration-500 bg-[#FDFDFD] dark:bg-gradient-to-b dark:from-[#101214] dark:from-20% dark:to-[#1B1D20] dark:to-80%">
-      
-      {/* Back button */} 
-      <div className='w-10/12 mb-4 mt-10 flex flex-row justify-center items-center'> 
-        <button onClick={() => navigate(-1)} className="w-2/12 flex items-center"> 
+
+      {/* Back button */}
+      <div className='w-10/12 mb-4 mt-10 flex flex-row justify-center items-center'>
+        <button onClick={() => navigate(-1)} className="w-2/12 flex items-center">
           <div className='w-10 h-10 rounded-full bg-[#5B93FF] flex items-center justify-center'>
-            <img src="/leftArrow.svg" alt="leftArrow"/>
+            <img src="/leftArrow.svg" alt="leftArrow" />
           </div>
-        </button> 
+        </button>
         <h2 className="text-3xl w-10/12 text-white font-bold">{experiment.title}</h2>
-        
-        <img 
+
+        <img
           src={isBookmarked ? bookmark : bookmarkStroke}
-          alt="bookmark" 
-          onClick={() => save()} 
+          alt="bookmark"
+          onClick={() => save()}
         />
-        
-      
+
+
       </div>
       {/* Title */}
       <div className="sm:w-full w-11/12  max-w-2xl mb-8">
@@ -91,8 +91,8 @@ function ExperimentTemplate({ experiments }) {
           ))}
         </ol>
       </div>
-      
-      <Footer/><PhoneFooter/>
+
+      <Footer /><PhoneFooter />
     </div>
   );
 }

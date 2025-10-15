@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import bookmarkStroke from '/bookmarkStroke.svg'
-import bookmark from '/bookmark.svg'
+import bookmarkStroke from '../../assets/bookmark-stroke.svg'
+import bookmark from '../../assets/bookmark.svg'
 
 // Enhanced icons
 const BookmarkIcon = ({ isActive }) => (
@@ -29,13 +29,13 @@ function Lister(props) {
   function save() {
     // Get existing data from localStorage for the specific type
     let existingData = JSON.parse(localStorage.getItem(props.type)) || [];
-    
+
     // Check if the current item already exists in the array
     const isExisting = existingData.some(item => item.name === props.name);
 
     if (!isExisting) {
       // Add new item to the existing data array
-      const newData = [...existingData, { name: props.name,title: props.title, description: props.description, path: props.path }];
+      const newData = [...existingData, { name: props.name, title: props.title, description: props.description, path: props.path }];
       localStorage.setItem(props.type, JSON.stringify(newData));
       console.log(`Added to bookmarks in ${props.type}`);
       setIsBookmarked(true); // Update bookmark status
@@ -58,7 +58,7 @@ function Lister(props) {
             backgroundRepeat: 'repeat'
           }}></div>
         </div>
-        
+
         <div className="relative z-10 pr-16">
           <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-gray-300 transition-colors duration-300">
             {props.title}
@@ -74,22 +74,21 @@ function Lister(props) {
             <ArrowIcon />
           </Link>
         </div>
-        
+
         {/* Enhanced Bookmark Button */}
-        <button 
-          onClick={() => save()} 
-          className={`absolute top-4 right-4 w-12 h-12 rounded-full flex justify-center items-center shadow-lg transition-all duration-300 hover:scale-110 ${
-            isBookmarked 
-              ? 'bg-gradient-to-r from-blue-500 to-emerald-500 hover:from-blue-600 hover:to-emerald-600' 
-              : 'bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 border border-slate-200 dark:border-gray-600'
-          }`}
+        <button
+          onClick={() => save()}
+          className={`absolute top-4 right-4 w-12 h-12 rounded-full flex justify-center items-center shadow-lg transition-all duration-300 hover:scale-110 ${isBookmarked
+            ? 'bg-gradient-to-r from-blue-500 to-emerald-500 hover:from-blue-600 hover:to-emerald-600'
+            : 'bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 border border-slate-200 dark:border-gray-600'
+            }`}
         >
           <BookmarkIcon isActive={isBookmarked} />
         </button>
-        
+
         {/* Hover effect overlay */}
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-        
+
         {/* Shine effect */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
           <div className="absolute -top-1 -left-1 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>

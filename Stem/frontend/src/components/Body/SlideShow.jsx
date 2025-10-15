@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import play from '/play.svg'
+import play from '../../assets/play.svg'
 const slides = [
   {
     id: 1,
@@ -33,44 +33,44 @@ function SlideShow() {
   };
 
   return (
-    
-      <div className={`w-full flex flex-row justify-center items-center sm:gap-8 gap-2`} >
-        <button 
-            className="bg-[#5B93FF] rounded-full sm:w-10 sm:h-10 w-5 h-5 flex justify-center items-center"
-            onClick={prevSlide}
-          >
-            <img src="/leftArrow.svg" alt="leftArrow" className='sm:scale-100 scale-75'/>
-        </button>
-        <div className='w-10/12 sm:h-[500px] h-[200px] flex flex-col justify-end items-start p-5' style={{
-            backgroundImage: `url("${slides[currentSlide].imageUrl}")`,
-            backgroundSize: 'cover', 
-            backgroundPosition: 'center'
 
-        }}>
-          <div className='flex sm:gap-6 gap-2 pb-2'>
-            <button className='bg-black rounded-full sm:w-10 sm:h-10 w-5 h-5 flex justify-center items-center'>
+    <div className={`w-full flex flex-row justify-center items-center sm:gap-8 gap-2`} >
+      <button
+        className="bg-[#5B93FF] rounded-full sm:w-10 sm:h-10 w-5 h-5 flex justify-center items-center"
+        onClick={prevSlide}
+      >
+        <img src="/leftArrow.svg" alt="leftArrow" className='sm:scale-100 scale-75' />
+      </button>
+      <div className='w-10/12 sm:h-[500px] h-[200px] flex flex-col justify-end items-start p-5' style={{
+        backgroundImage: `url("${slides[currentSlide].imageUrl}")`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+
+      }}>
+        <div className='flex sm:gap-6 gap-2 pb-2'>
+          <button className='bg-black rounded-full sm:w-10 sm:h-10 w-5 h-5 flex justify-center items-center'>
             <img src={play} alt="play" className='sm:scale-100 scale-50' />
-            </button>
-            <button className='bg-black rounded-full sm:w-10 sm:h-10 w-5 h-5 flex justify-center items-center'>
-            <img src="/bookmark.svg" alt="bookmark" className='scale-50 sm:scale-90'/>
-            </button>
-          </div>
-          <div className='p-2 rounded-xl  w-2/3'>
+          </button>
+          <button className='bg-black rounded-full sm:w-10 sm:h-10 w-5 h-5 flex justify-center items-center'>
+            <img src="/bookmark.svg" alt="bookmark" className='scale-50 sm:scale-90' />
+          </button>
+        </div>
+        <div className='p-2 rounded-xl  w-2/3'>
           <h2 className="sm:text-[40px] opacity-100 text-[10px] font-extrabold text-white text-left">{slides[currentSlide].title}</h2>
           <p className="sm:text-xl text-[5px] font-medium text-white ">{slides[currentSlide].content}</p>
-          </div>
         </div>
-        
-          
-        <button 
-            className="bg-[#5B93FF] rounded-full sm:w-10 sm:h-10 w-5 h-5 flex justify-center items-center"
-            onClick={nextSlide}
-        >
-            <img src="/rightArrow.svg" alt="rightArrow" className='sm:scale-100 scale-75'/>
-        </button>
-        
       </div>
-    
+
+
+      <button
+        className="bg-[#5B93FF] rounded-full sm:w-10 sm:h-10 w-5 h-5 flex justify-center items-center"
+        onClick={nextSlide}
+      >
+        <img src="/rightArrow.svg" alt="rightArrow" className='sm:scale-100 scale-75' />
+      </button>
+
+    </div>
+
   );
 }
 

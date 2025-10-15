@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-//import logo from '/logo.png'  bro remember to do this later
+import logo from "../assets/logo.png";
 
 // Enhanced social media icons
 const FacebookIcon = () => (
