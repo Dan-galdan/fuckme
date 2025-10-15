@@ -134,7 +134,6 @@ const questions = [
     grade: 'EESH',
     subject: 'physics'
   },
-  // Additional questions for better coverage
   {
     stem: 'What is the SI unit of force?',
     kind: 'mcq',
@@ -183,25 +182,40 @@ async function seedQuestions() {
     console.log('🗑️ Clearing existing questions and tests...');
 
     // Clear existing data
-    await Question.deleteMany({});
-    await Test.deleteMany({ type: 'placement' });
+    const deleteQuestions = await Question.deleteMany({});
+    const deleteTests = await Test.deleteMany({ type: 'placement' });
+
+    console.log(`🗑️ Deleted ${deleteQuestions.deletedCount} questions and ${deleteTests.deletedCount} tests`);
 
     console.log('📦 Seeding questions...');
 
-    // Insert questions
-    for (const questionData of questions) {
-      const question = new Question(questionData);
-      await question.save();
-      console.log(`✅ Created question: ${question.stem.substring(0, 50)}...`);
-    }
+    // Use insertMany for better performance and to ensure all fields are saved
+    const result = await Question.insertMany(questions);
+    console.log(`✅ Successfully created ${result.length} questions`);
+
+    // Verify questions were saved with grades
+    // Verify questions were saved with grades
+    console.log('🔍 Verifying saved questions...');
+    const savedQuestions = await Question.find({});
+    console.log(`📊 Total questions in database: ${savedQuestions.length}`);
+
+    // Check grades distribution - fix the TypeScript error
+    const gradeCounts: Record<string, number> = {};
+    savedQuestions.forEach((q: any) => {
+      const grade = (q as any).grade || 'unknown';
+      gradeCounts[grade] = (gradeCounts[grade] || 0) + 1;
+    });
+    console.log('📈 Questions by grade:', gradeCounts);
 
     console.log('🎯 Creating placement tests for each grade...');
 
     // Create placement tests for each grade
     const grades = ['6', '7', '8', '9', '10', '11', '12', 'EESH'];
+    let totalTestsCreated = 0;
 
     for (const grade of grades) {
-      const gradeQuestions = await Question.find({ grade });
+      const gradeQuestions = await Question.find({ grade: grade });
+      console.log(`🔍 Found ${gradeQuestions.length} questions for grade ${grade}`);
 
       if (gradeQuestions.length > 0) {
         const placementTest = new Test({
@@ -221,13 +235,15 @@ async function seedQuestions() {
 
         await placementTest.save();
         console.log(`✅ Created placement test for grade ${grade} with ${gradeQuestions.length} questions`);
+        totalTestsCreated++;
       } else {
         console.log(`⚠️ No questions found for grade ${grade}`);
       }
     }
 
     console.log('🎉 Database seeding completed successfully!');
-    console.log('📊 You can now test the placement test at: http://localhost:4000/api/tests/placement?grade=6');
+    console.log(`📊 Created ${totalTestsCreated} placement tests`);
+    console.log('🚀 You can now test the placement test at: http://localhost:4000/api/tests/placement?grade=6');
 
     process.exit(0);
   } catch (error) {
@@ -236,4 +252,7 @@ async function seedQuestions() {
   }
 }
 
-seedQuestions();
+// Only run if called directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedQuestions();
+}
