@@ -7,37 +7,79 @@ import { verifyAccessToken } from '../../utils/auth.js';
 
 export default async function testRoutes(fastify: FastifyInstance) {
   // Get placement test
-  fastify.get('/placement', async (request, reply) => {
-    const query = request.query as any;
-    const grade = query.grade || '6';
-    
-    // Find placement test for the grade
-    let placementTest = await Test.findOne({
-      type: 'placement',
-      gradeRange: { $in: [grade] },
-      isActive: true
-    }).populate('questionRefs.questionId');
-    
-    if (!placementTest) {
-      // Create a basic placement test if none exists
-      const questions = await Question.find({
-        topics: { $in: getGradeTopics(grade) },
-        difficulty: { $gte: 1, $lte: 5 }
-      }).limit(20);
-      
-      if (questions.length === 0) {
+  // Get placement test
+  fastify.get('/placement', {
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          sessionId: { type: 'string' },
+          grade: { type: 'string' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { sessionId, grade } = request.query as any;
+
+    // Add comprehensive debug logging
+    console.log('=== PLACEMENT TEST REQUEST ===');
+    console.log('Session ID:', sessionId);
+    console.log('Grade:', grade);
+    console.log('Full query:', request.query);
+    console.log('Request URL:', request.url);
+    console.log('==============================');
+
+    // If sessionId is provided, verify the placement session exists
+    if (sessionId) {
+      const session = await PlacementSession.findOne({ sessionId });
+      if (!session) {
+        console.log('❌ Placement session not found:', sessionId);
         return reply.status(404).send({
-          error: 'No questions available',
-          message: 'No questions found for placement test'
+          error: 'Session not found',
+          message: 'Placement session not found or expired. Please restart registration.'
         });
       }
-      
+      console.log('✅ Placement session found for:', session.email);
+    } else {
+      console.log('ℹ️  No sessionId provided - proceeding with grade-based test');
+    }
+
+    // Use provided grade or default to '6'
+    const testGrade = grade || '6';
+    console.log('Using grade level:', testGrade);
+
+    // Find placement test for the grade (your existing logic)
+    let placementTest = await Test.findOne({
+      type: 'placement',
+      gradeRange: { $in: [testGrade] },
+      isActive: true
+    }).populate('questionRefs.questionId');
+
+    if (!placementTest) {
+      console.log('📝 No existing placement test found, creating new one for grade:', testGrade);
+
+      // Create a basic placement test if none exists
+      const questions = await Question.find({
+        topics: { $in: getGradeTopics(testGrade) },
+        difficulty: { $gte: 1, $lte: 5 }
+      }).limit(20);
+
+      if (questions.length === 0) {
+        console.log('❌ No questions available in database for grade:', testGrade);
+        return reply.status(404).send({
+          error: 'No questions available',
+          message: 'No questions found for placement test. Please contact administrator.'
+        });
+      }
+
+      console.log(`✅ Found ${questions.length} questions for placement test`);
+
       placementTest = new Test({
         type: 'placement',
-        title: `Placement Test - Grade ${grade}`,
+        title: `Placement Test - Grade ${testGrade}`,
         description: 'Determine your current level',
-        gradeRange: [grade],
-        topics: getGradeTopics(grade),
+        gradeRange: [testGrade],
+        topics: getGradeTopics(testGrade),
         questionRefs: questions.map(q => ({
           questionId: q._id,
           weight: 1,
@@ -45,12 +87,15 @@ export default async function testRoutes(fastify: FastifyInstance) {
         })),
         isActive: true
       });
-      
+
       await placementTest.save();
       await placementTest.populate('questionRefs.questionId');
+      console.log('✅ Created new placement test:', placementTest._id);
+    } else {
+      console.log('✅ Found existing placement test:', placementTest._id);
     }
-    
-    // Return test without answers
+
+    // Prepare test data without answers
     const testData = {
       id: (placementTest._id as any).toString(),
       title: placementTest.title,
@@ -68,10 +113,13 @@ export default async function testRoutes(fastify: FastifyInstance) {
         topics: ref.questionId.topics
       }))
     };
-    
+
+    console.log(`✅ Returning placement test with ${testData.questions.length} questions`);
+    console.log('=== PLACEMENT TEST RESPONSE SENT ===');
+
     return testData;
   });
-  
+
   // Submit test attempt
   fastify.post('/attempt', {
     schema: {
@@ -97,7 +145,7 @@ export default async function testRoutes(fastify: FastifyInstance) {
     }
   }, async (request, reply) => {
     const { testId, placementSessionId, answers } = request.body as any;
-    
+
     // Check if this is a logged-in user taking a retest
     const token = request.cookies.accessToken;
     let user = null;
@@ -107,7 +155,7 @@ export default async function testRoutes(fastify: FastifyInstance) {
         user = await User.findById(payload.userId);
       }
     }
-    
+
     // Get test and questions
     const test = await Test.findById(testId).populate('questionRefs.questionId');
     if (!test) {
@@ -116,23 +164,23 @@ export default async function testRoutes(fastify: FastifyInstance) {
         message: 'The specified test does not exist'
       });
     }
-    
+
     // Process answers and calculate scores
     const attemptItems = [];
     let totalScore = 0;
     const topicStats: Record<string, { correct: number; total: number }> = {};
-    
+
     for (const answer of answers) {
-      const questionRef = test.questionRefs.find((ref: any) => 
+      const questionRef = test.questionRefs.find((ref: any) =>
         ref.questionId._id.toString() === answer.questionId
       );
-      
+
       if (!questionRef) continue;
-      
+
       const question = questionRef.questionId as any;
       const isCorrect = checkAnswer(question, answer.answer);
       const score = isCorrect ? questionRef.weight : 0;
-      
+
       attemptItems.push({
         questionId: question._id,
         answer: answer.answer,
@@ -140,9 +188,9 @@ export default async function testRoutes(fastify: FastifyInstance) {
         score,
         topicTags: question.topics
       });
-      
+
       totalScore += score;
-      
+
       // Update topic statistics
       for (const topic of question.topics) {
         if (!topicStats[topic]) {
@@ -154,12 +202,12 @@ export default async function testRoutes(fastify: FastifyInstance) {
         }
       }
     }
-    
+
     const scorePercent = (totalScore / test.questionRefs.length) * 100;
-    const weakTopics = Object.keys(topicStats).filter(topic => 
+    const weakTopics = Object.keys(topicStats).filter(topic =>
       topicStats[topic].correct / topicStats[topic].total < 0.5
     );
-    
+
     // Handle placement test completion for both new registrations and existing users
     if (placementSessionId) {
       // New user registration flow
@@ -173,10 +221,10 @@ export default async function testRoutes(fastify: FastifyInstance) {
         });
       }
       console.log(`Placement session found: ${placementSessionId} for ${sessionData.email}`);
-      
+
       // Store the level estimate and topics profile in the session
       const levelEstimate = computeLevel(scorePercent, sessionData.grade);
-      
+
       await PlacementSession.updateOne(
         { sessionId: placementSessionId },
         {
@@ -187,7 +235,7 @@ export default async function testRoutes(fastify: FastifyInstance) {
     } else if (user) {
       // Existing user retest flow
       console.log(`Existing user retest: ${user.email}`);
-      
+
       // Create LevelScore record for the retest
       const levelEstimate = computeLevel(scorePercent, user.grade);
       const levelScore = new LevelScore({
@@ -196,18 +244,18 @@ export default async function testRoutes(fastify: FastifyInstance) {
         level: levelEstimate,
         scorePercent: scorePercent,
         topicsProfile: calculateTopicMastery(topicStats),
-        weakTopics: Object.keys(topicStats).filter(topic => 
+        weakTopics: Object.keys(topicStats).filter(topic =>
           topicStats[topic].correct / topicStats[topic].total < 0.5
         )
       });
-      
+
       await levelScore.save();
-      
+
       // Generate new recommendations based on retest results
       try {
         const lessonIds = await computeRecommendations((user._id as any).toString());
         const rationale = `Updated recommendations based on retest results. Level: ${levelEstimate}, Weak topics: ${Object.keys(topicStats).filter(topic => topicStats[topic].correct / topicStats[topic].total < 0.5).join(', ')}`;
-        
+
         if (lessonIds.length > 0) {
           await saveRecommendations((user._id as any).toString(), lessonIds, rationale);
         }
@@ -220,7 +268,7 @@ export default async function testRoutes(fastify: FastifyInstance) {
         message: 'You must be logged in to take a placement test, or provide a valid placement session ID.'
       });
     }
-    
+
     // Create test attempt record
     const attempt = new TestAttempt({
       ...(user ? { userId: user._id } : {}), // Set userId for existing users
@@ -232,9 +280,9 @@ export default async function testRoutes(fastify: FastifyInstance) {
       levelEstimate: placementSessionId ? computeLevel(scorePercent, '6') : (user ? computeLevel(scorePercent, user.grade) : undefined),
       summaryWeakTopics: weakTopics
     });
-    
+
     await attempt.save();
-    
+
     const response: any = {
       attemptId: (attempt._id as any).toString(),
       totalScore: scorePercent,
@@ -265,25 +313,25 @@ export default async function testRoutes(fastify: FastifyInstance) {
 
     return response;
   });
-  
+
   // Get retest schedule
   fastify.get('/retest/schedule', async (request, reply) => {
     const token = request.cookies.accessToken;
-    
+
     // Debug logging
     fastify.log.info({
       cookies: request.cookies,
       hasToken: !!token,
       tokenLength: token?.length
     }, 'Retest schedule request');
-    
+
     if (!token) {
       return reply.status(401).send({
         error: 'Unauthorized',
         message: 'Authentication required'
       });
     }
-    
+
     const payload = verifyAccessToken(token);
     if (!payload) {
       return reply.status(401).send({
@@ -291,7 +339,7 @@ export default async function testRoutes(fastify: FastifyInstance) {
         message: 'Authentication token is invalid'
       });
     }
-    
+
     const user = await User.findById(payload.userId);
     if (!user) {
       return reply.status(404).send({
@@ -299,23 +347,23 @@ export default async function testRoutes(fastify: FastifyInstance) {
         message: 'User does not exist'
       });
     }
-    
+
     // Check if user is eligible for retest
     const lastLevelScore = await LevelScore.findOne({ userId: user._id })
       .sort({ createdAt: -1 });
-    
+
     const completedLessons = 0; // TODO: Count completed lessons
-    
-    const isEligible = !lastLevelScore || 
+
+    const isEligible = !lastLevelScore ||
       (Date.now() - lastLevelScore.createdAt.getTime()) > (14 * 24 * 60 * 60 * 1000) ||
       completedLessons >= 8;
-    
+
     return {
       isEligible,
       lastTestDate: lastLevelScore?.createdAt,
       completedLessons,
-      nextEligibleDate: lastLevelScore ? 
-        new Date(lastLevelScore.createdAt.getTime() + (14 * 24 * 60 * 60 * 1000)) : 
+      nextEligibleDate: lastLevelScore ?
+        new Date(lastLevelScore.createdAt.getTime() + (14 * 24 * 60 * 60 * 1000)) :
         new Date()
     };
   });
@@ -331,20 +379,20 @@ function checkAnswer(question: any, answer: any): boolean {
     case 'mcq':
       const correctOption = question.options?.find((opt: any) => opt.isCorrect);
       return correctOption?.id === String(answer);
-    
+
     case 'numeric':
       const tolerance = 0.01;
       const numericAnswer = Number(answer);
       const numericKey = Number(question.answerKey);
-      return !isNaN(numericAnswer) && !isNaN(numericKey) && 
-             Math.abs(numericAnswer - numericKey) <= tolerance;
-    
+      return !isNaN(numericAnswer) && !isNaN(numericKey) &&
+        Math.abs(numericAnswer - numericKey) <= tolerance;
+
     case 'short_text':
       if (question.answerKey instanceof RegExp) {
         return question.answerKey.test(String(answer).toLowerCase());
       }
       return String(answer).toLowerCase() === String(question.answerKey).toLowerCase();
-    
+
     default:
       return false;
   }
@@ -361,6 +409,6 @@ function getGradeTopics(grade: string): string[] {
     '12': ['kinematics', 'forces', 'energy', 'waves', 'electricity', 'magnetism', 'optics', 'thermodynamics', 'quantum', 'relativity'],
     'EESH': ['kinematics', 'forces', 'energy', 'waves', 'electricity', 'magnetism', 'optics', 'thermodynamics', 'quantum', 'relativity']
   };
-  
+
   return topicMap[grade] || topicMap['6'];
 }

@@ -50,6 +50,21 @@ await fastify.register(rateLimit, {
   timeWindow: '1 minute'
 });
 
+
+fastify.get('/', async (request, reply) => {
+  return {
+    message: 'Physics School API',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      tests: '/api/tests',
+      lessons: '/api/lessons',
+      health: '/api/healthz'
+    }
+  };
+});
+
+
 // Health check
 fastify.get('/api/healthz', async (request, reply) => {
   return { status: 'ok', timestamp: new Date().toISOString() };
@@ -67,7 +82,7 @@ await fastify.register(webhookRoutes, { prefix: '/api/webhooks' });
 // Error handler
 fastify.setErrorHandler((error, request, reply) => {
   fastify.log.error(error);
-  
+
   if (error.validation) {
     reply.status(400).send({
       error: 'Validation Error',
@@ -75,7 +90,7 @@ fastify.setErrorHandler((error, request, reply) => {
     });
     return;
   }
-  
+
   reply.status(500).send({
     error: 'Internal Server Error',
     message: env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
