@@ -40,10 +40,7 @@ function EYSHlist({ hicheel }) {
         if (selectedType === 'video' && (title.includes('видео') || title.includes('video') || title.includes('тайлбар'))) {
           return true;
         }
-        if (selectedType === 'test' && (title.includes('тест') || title.includes('test') || title.includes('сорил'))) {
-          return true;
-        }
-        if (selectedType === 'exercise' && (title.includes('дасгал') || title.includes('exercise') || title.includes('бодлого'))) {
+        if (selectedType === 'test' && (title.includes('тест') || title.includes('test') || title.includes('дасгал'))) {
           return true;
         }
         return false;
