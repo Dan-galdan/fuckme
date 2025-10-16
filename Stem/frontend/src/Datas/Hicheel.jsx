@@ -1,28 +1,28 @@
 export const hicheel = [
-  
+
   {
     id: 1,
     name: 'Eyesh23-2-1',
     title: 'Физик ЭЕШ 2023 оны 2.1 даалгавар',
     videoSrc: 'https://www.youtube.com/embed/WOeck4uKJBc?si=1OuPaTaPAdzMWVPv',
   },
- 
+
   {
     id: 2,
     name: 'Eyesh24-2-2-3',
-    title: 'Физик эеш 2024 2.2 2.3',
+    title: 'Физик эеш 2024 2.2 2.3 даалгавар',
     videoSrc: 'https://www.youtube.com/embed/7fm3AOGFAxM?si=0Q9hXIxYdp4ZThyY',
   },
   {
     id: 3,
     name: 'Eyesh24A-1-21',
-    title: 'ЭЕШ Физик 2024 он 1-21 А Хувилбар',
+    title: 'Физик ЭЕШ 2024 он 1-21 А Хувилбар',
     videoSrc: 'https://www.youtube.com/embed/OqFvYCP3S2c?si=SoyX65Ch-LmTgX8X',
   },
   {
     id: 4,
     name: 'Eyesh24A-22-24',
-    title: 'Физик 2024 А Хувилбар 22-46',
+    title: 'Физик 2024 Хувилбар А 22-46',
     videoSrc: 'https://www.youtube.com/embed/zomSjjARpHs?si=Jrj8d04zn-akNDcP',
   },
   {
@@ -67,14 +67,9 @@ export const hicheel = [
     title: 'Физик - Улсын шалгалт 2024 он',
     videoSrc: 'https://www.youtube.com/embed/1GK2RxNm7KA?si=9RG8GxSbq6u9_KNk',
   },
+
   {
     id: 12,
-    name: 'MathEyesh24D',
-    title: 'Математик ЭЕШ 2024 задгай даалгавар D хувилбар',
-    videoSrc: 'https://www.youtube.com/embed/zaef47k3SG8?si=C5QAg38q0CmvslUI',
-  },
-  {
-    id: 13,
     name: 'Eyesh24A-2-1-4',
     title: '2024 оны Улсын шалгалт задгай даалгавар',
     videoSrc: 'https://www.youtube.com/embed/A32LSL53584?si=1tbtCXaJAGm9TEi3',

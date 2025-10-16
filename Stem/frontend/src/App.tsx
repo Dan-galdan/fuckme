@@ -33,9 +33,9 @@ import LevelCheckPage from './Pages/LevelCheck';
 import LessonTemplate from './Pages/LessonTemplate';
 import AdminPage from './Pages/Admin';
 
-import {experiments} from './Datas/Experiments'
-import {items} from './Datas/Items'
-import {hicheel} from './Datas/Hicheel'
+import { experiments } from './Datas/Experiments'
+import { items } from './Datas/Items'
+import { hicheel } from './Datas/Hicheel'
 import { useUIStore } from './stores/ui';
 
 const queryClient = new QueryClient();
@@ -53,56 +53,57 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <div className={`${darkMode ? "dark" : ""}`}>
-          <Header darkMode={darkMode} toggleDarkMode={toggleDarkMode}/>
-          <PhoneHeader darkMode={darkMode} toggleDarkMode={toggleDarkMode}/>
+          <Header darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+          <PhoneHeader darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
           <Routes>
-            
+
             <Route path="/" element={<Home />} />
             <Route path="/home" element={<Home />} />
 
-            <Route path="/physic" element={<Physics />}/>
-            <Route 
+            <Route path="/physic" element={<Physics />} />
+            <Route
               path="/physic/:grade"
-              element={<ExperimentList Subject="Physics" />} 
+              element={<ExperimentList Subject="Physics" />}
             />
-            <Route 
-              path="/physic/experiment/:name" 
-              element={<ExperimentTemplate experiments={experiments} />} 
+            <Route
+              path="/physic/experiment/:name"
+              element={<ExperimentTemplate experiments={experiments} />}
             />
-            <Route 
-              path="/physic/lesson/:id" 
-              element={<LessonTemplate />} 
+            <Route
+              path="/physic/lesson/:id"
+              element={<LessonTemplate />}
             />
-            
+
             <Route path="/physic/EYSH_beltgel" element={<EYSHlist hicheel={hicheel} />} />
-            <Route path="/physic/EYSH_beltgel/:name" element={<EYSHtemplate hicheel={hicheel} />} /> 
+            <Route path="/physic/EYSH_beltgel/:name" element={<EYSHtemplate hicheel={hicheel} />} />
 
             <Route path='/chemistry' element={<Chemistry />} />
 
             <Route path='/market' element={<Market />} />
-            <Route path='/market/:name' element={<ItemTemplate items={items} />}/>
+            <Route path='/market/:name' element={<ItemTemplate items={items} />} />
 
-            <Route path='/aboutUs' element={<About />}/>
-            <Route path='/surtchilgaa' element={<Surtchilgaa />}/>
-            <Route path='/holboobarih' element={<HolbooBarih />}/>
+            <Route path='/aboutUs' element={<About />} />
+            <Route path='/surtchilgaa' element={<Surtchilgaa />} />
+            <Route path='/holboobarih' element={<HolbooBarih />} />
 
-            <Route path='/search' element={<Search />}/>
-            <Route path='/favourite' element={<Favourite />}/>
-            
+            <Route path='/search' element={<Search />} />
+            <Route path='/favourite' element={<Favourite />} />
+
             {/* Authentication routes */}
-            <Route path='/login' element={<Login />}/>
-            <Route path='/signup' element={<SignUp />}/>
-            <Route path='/register' element={<RegisterPage />}/>
-            <Route path='/placement' element={<PlacementTestPage />}/>
-            <Route path='/dashboard' element={<DashboardPage />}/>
-            <Route path='/level-check' element={<LevelCheckPage />}/>
-            <Route path='/pay' element={<PaymentPage />}/>
+            <Route path='/login' element={<Login />} />
+            <Route path='/signup' element={<SignUp />} />
+            <Route path='/register' element={<RegisterPage />} />
+            <Route path='/placement' element={<PlacementTestPage />} />
+            <Route path='/dashboard' element={<DashboardPage />} />
+            <Route path='/level-check' element={<LevelCheckPage />} />
+            <Route path='/pay' element={<PaymentPage />} />
             {/* Admin route */}
             {user?.roles?.includes('admin') && (
-              <Route path='/admin' element={<AdminPage />}/>
+              <Route path='/admin' element={<AdminPage />} />
             )}
+
           </Routes>
-          
+
           <RouterAwarePhoneNav />
         </div>
       </Router>
@@ -114,11 +115,11 @@ function App() {
 function RouterAwarePhoneNav() {
   const location = useLocation();
   const isPhysicPage = location.pathname.includes('/physic/');
-  
+
   if (isPhysicPage) {
     return null;
   }
-  
+
   return <PhoneNav />;
 }
 
