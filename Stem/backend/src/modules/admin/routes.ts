@@ -12,7 +12,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
         message: 'Authentication required'
       });
     }
-    
+
     const payload = verifyAccessToken(token);
     if (!payload || !payload.roles.includes('admin')) {
       return reply.status(403).send({
@@ -21,7 +21,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
       });
     }
   });
-  
+
   // Create lesson
   fastify.post('/lessons', {
     schema: {
@@ -43,16 +43,16 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     }
   }, async (request, reply) => {
     const lessonData = request.body as any;
-    
+
     const lesson = new Lesson(lessonData);
     await lesson.save();
-    
+
     return {
       id: (lesson._id as any).toString(),
       message: 'Lesson created successfully'
     };
   });
-  
+
   // Create question
   fastify.post('/questions', {
     schema: {
@@ -71,16 +71,16 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     }
   }, async (request, reply) => {
     const questionData = request.body as any;
-    
+
     const question = new Question(questionData);
     await question.save();
-    
+
     return {
       id: (question._id as any).toString(),
       message: 'Question created successfully'
     };
   });
-  
+
   // Create test
   fastify.post('/tests', {
     schema: {
@@ -101,16 +101,35 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     }
   }, async (request, reply) => {
     const testData = request.body as any;
-    
+
     const test = new Test(testData);
     await test.save();
-    
+
     return {
       id: (test._id as any).toString(),
       message: 'Test created successfully'
     };
   });
-  
+  // Add this route to your existing adminRoutes function
+  // Get all tests (ADD THIS BEFORE OR AFTER THE STATS ENDPOINT)
+  fastify.get('/tests', async (request, reply) => {
+    const tests = await Test.find({})
+      .sort({ createdAt: -1 })
+      .select('_id title description type gradeRange topics timeLimitSec isActive createdAt');
+
+    return {
+      tests: tests.map(test => ({
+        id: (test._id as any).toString(),
+        title: test.title,
+        description: test.description,
+        type: test.type,
+        gradeRange: test.gradeRange,
+        topics: test.topics,
+        timeLimitSec: test.timeLimitSec,
+        isActive: test.isActive
+      }))
+    };
+  });
   // Get admin stats
   fastify.get('/stats/overview', async (request, reply) => {
     const [
@@ -133,7 +152,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
         { $sort: { count: -1 } }
       ])
     ]);
-    
+
     return {
       overview: {
         totalUsers,
