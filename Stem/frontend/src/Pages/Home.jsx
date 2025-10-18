@@ -7,7 +7,6 @@ import { hicheel } from '../Datas/Hicheel'
 import PhoneHeader from '../components/Header/phoneHeader'
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import AdminPanel from './AdminPanel.jsx'; // Add this import
 
 
 // Enhanced inline icons (your existing icons)
@@ -305,29 +304,6 @@ function Home() {
   const lastThreeExperiments = experiments.slice(-3);
   const lastThreehicheel = hicheel.slice(-3);
 
-  // Add admin panel state
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
-  const [adminKeys, setAdminKeys] = useState([]);
-
-  // Add keyboard listener for "admin" sequence
-  useEffect(() => {
-    const handleKeyPress = (event) => {
-      // Check for "ADMIN" sequence (case insensitive)
-      const newKeys = [...adminKeys, event.key.toLowerCase()];
-      if (newKeys.length > 5) newKeys.shift(); // Keep only last 5 keys
-
-      setAdminKeys(newKeys);
-
-      // Check if sequence is "admin"
-      if (newKeys.join('') === 'admin') {
-        setShowAdminPanel(true);
-        setAdminKeys([]);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [adminKeys]);
 
   return (
     <div className="w-full transition-colors duration-500 bg-gradient-to-b from-slate-50 to-white dark:bg-gradient-to-b dark:from-gray-900 dark:to-black relative min-h-screen z-10">
@@ -379,10 +355,6 @@ function Home() {
       {/* Spacing between cards and footer */}
       <div className="h-16 sm:h-24"></div>
 
-      {/* Admin Panel */}
-      {showAdminPanel && (
-        <AdminPanel onClose={() => setShowAdminPanel(false)} />
-      )}
 
       <Footer />
       <PhoneFooter />

@@ -33,27 +33,32 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       isLoading: false,
-      
+
       setUser: (user: User | null) => set({ user, isAuthenticated: !!user }),
       setLoading: (isLoading: boolean) => set({ isLoading }),
-      
+
+      // In your auth store, modify the login function:
       login: async (emailOrPhone: string, password: string) => {
         set({ isLoading: true });
         try {
-          const loginData = emailOrPhone.includes('@') 
+          const loginData = emailOrPhone.includes('@')
             ? { email: emailOrPhone, password }
             : { phone: emailOrPhone, password };
-            
+
+          console.log('🔐 Login request data:', loginData);
           const response = await apiClient.login(loginData) as any;
+          console.log('🔐 Login API response:', response); // ← ADD THIS
+
           set({ user: response.user, isAuthenticated: true });
         } catch (error) {
+          console.error('🔐 Login error:', error);
           set({ user: null, isAuthenticated: false });
           throw error;
         } finally {
           set({ isLoading: false });
         }
       },
-      
+
       logout: async () => {
         try {
           await apiClient.logout();
@@ -63,7 +68,7 @@ export const useAuthStore = create<AuthState>()(
           set({ user: null, isAuthenticated: false });
         }
       },
-      
+
       checkAuth: async () => {
         set({ isLoading: true });
         try {

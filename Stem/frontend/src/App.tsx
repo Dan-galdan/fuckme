@@ -31,7 +31,7 @@ import DashboardPage from './Pages/Dashboard';
 import PaymentPage from './Pages/Payment';
 import LevelCheckPage from './Pages/LevelCheck';
 import LessonTemplate from './Pages/LessonTemplate';
-import AdminPage from './Pages/Admin';
+import AdminPage from './Pages/AdminPage';
 
 import { experiments } from './Datas/Experiments'
 import { items } from './Datas/Items'
@@ -98,9 +98,8 @@ function App() {
             <Route path='/level-check' element={<LevelCheckPage />} />
             <Route path='/pay' element={<PaymentPage />} />
             {/* Admin route */}
-            {user?.roles?.includes('admin') && (
-              <Route path='/admin' element={<AdminPage />} />
-            )}
+
+            <Route path='/admin' element={<AdminPage />} />
 
           </Routes>
 
