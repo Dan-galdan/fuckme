@@ -1,106 +1,143 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { useAuthStore } from '../stores/auth';
 
-interface Lesson {
-  id: string;
-  title: string;
-  slug: string;
-  grade: string;
-  topics: string[];
-  difficulty: number;
-  type: 'video' | 'reading' | 'exercise';
-  contentUrl?: string;
-}
-
-interface Recommendation {
-  lessons: Lesson[];
-  rationale: string;
-  computedAt: string | null;
+interface TestAttempt {
+  attemptId: string;
+  testId: string;
+  testTitle: string;
+  score: number;
+  levelEstimate: string;
+  completedAt: string;
+  totalQuestions?: number;
 }
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { state } = useLocation();
   const { user, isAuthenticated } = useAuthStore();
-  const [recommendations, setRecommendations] = useState<Recommendation | null>(null);
   const [retestSchedule, setRetestSchedule] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [testHistory, setTestHistory] = useState<TestAttempt[]>([]);
+
+  // Show test results if user just completed a test
+  const [showTestResults, setShowTestResults] = useState(false);
+  const [testResults, setTestResults] = useState<any>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
-    loadDashboardData();
-  }, [isAuthenticated, navigate]);
 
+    // Check if user just completed a test
+    if (state?.testCompleted) {
+      setShowTestResults(true);
+      setTestResults({
+        score: state.testScore,
+        level: state.levelEstimate,
+        weakTopics: state.weakTopics,
+        message: state.message,
+        correctAnswers: state.correctAnswers,
+        totalQuestions: state.totalQuestions
+      });
+      // Clear the state so it doesn't show again
+      window.history.replaceState({}, document.title);
+    }
+
+    loadDashboardData();
+  }, [isAuthenticated, navigate, state]);
+
+  // In Dashboard.tsx, update the loadDashboardData function:
   const loadDashboardData = async () => {
     try {
-      console.log('🔍 Dashboard: Loading recommendations...');
-      const [recData, scheduleData] = await Promise.all([
-        apiClient.getRecommendations() as Promise<Recommendation>,
-        apiClient.getRetestSchedule() as Promise<any>
-      ]);
-      
-      console.log('📊 Dashboard: Received recommendation data:', {
-        hasRecommendations: !!recData,
-        lessonCount: recData?.lessons?.length || 0,
-        lessons: recData?.lessons?.map(l => ({ id: l.id, title: l.title })) || [],
-        rationale: recData?.rationale
-      });
-      
-      setRecommendations(recData);
+      console.log('🔍 Dashboard: Loading data...');
+
+      // Load retest schedule (this should work even without auth)
+      const scheduleData = await apiClient.getRetestSchedule();
+      console.log('📊 Dashboard: Received retest schedule:', scheduleData);
       setRetestSchedule(scheduleData);
+
+      // Try to load test history, but handle auth errors gracefully
+      try {
+        const historyData = await apiClient.getTestHistory();
+        console.log('📊 Dashboard: Received test history:', historyData);
+        const attempts = (historyData as any)?.attempts || [];
+        setTestHistory(attempts);
+      } catch (historyError: any) {
+        console.warn('⚠️ Dashboard: Could not load test history (auth required):', historyError.message);
+        // Set empty history - this is normal for new/unauthenticated users
+        setTestHistory([]);
+      }
+
     } catch (error: any) {
-      console.error('❌ Dashboard: Error loading data:', error);
-      setError(error.message || 'Failed to load dashboard data');
+      console.error('❌ Dashboard: Error loading critical data:', error);
+      // Only show error for critical failures, not for optional features like test history
+      if (!error.message.includes('test-history') && !error.message.includes('auth')) {
+        setError(error.message || 'Failed to load dashboard data');
+      }
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleLessonClick = (lessonId: string) => {
-    navigate(`/lessons/${lessonId}`);
   };
 
   const handleRetestClick = () => {
     navigate('/placement');
   };
 
-  const getDifficultyColor = (difficulty: number) => {
-    const colors = {
-      1: 'bg-green-100 text-green-800',
-      2: 'bg-blue-100 text-blue-800',
-      3: 'bg-yellow-100 text-yellow-800',
-      4: 'bg-orange-100 text-orange-800',
-      5: 'bg-red-100 text-red-800'
-    };
-    return colors[difficulty as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  const getGradeColor = (score: number) => {
+    if (score >= 90) return 'text-green-600 dark:text-green-400';
+    if (score >= 80) return 'text-blue-600 dark:text-blue-400';
+    if (score >= 70) return 'text-yellow-600 dark:text-yellow-400';
+    if (score >= 60) return 'text-orange-600 dark:text-orange-400';
+    return 'text-red-600 dark:text-red-400';
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'video': return '🎥';
-      case 'reading': return '📖';
-      case 'exercise': return '✏️';
-      default: return '📄';
-    }
+  const getGradeText = (score: number) => {
+    if (score >= 90) return 'А (Маш сайн)';
+    if (score >= 80) return 'Б (Сайн)';
+    if (score >= 70) return 'В (Дунд)';
+    if (score >= 60) return 'Г (Хангалттай)';
+    return 'Д (Хангалтгүй)';
   };
+
+  // Calculate correct answers for latest test
+  const getLatestTestStats = () => {
+    if (testHistory.length > 0) {
+      const latestTest = testHistory[0];
+      return {
+        correct: Math.round((latestTest.score / 100) * (latestTest.totalQuestions || 10)),
+        total: latestTest.totalQuestions || 10
+      };
+    }
+
+    // If we have test results from current test, use that
+    if (testResults) {
+      return {
+        correct: testResults.correctAnswers || 0,
+        total: testResults.totalQuestions || 10
+      };
+    }
+
+    return { correct: 0, total: 0 };
+  };
+
+  const latestTestStats = getLatestTestStats();
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading dashboard...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Хянах самбар ачааллаж байна...</p>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error && !showTestResults) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -109,7 +146,7 @@ const DashboardPage: React.FC = () => {
             onClick={loadDashboardData}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            Retry
+            Дахин оролдох
           </button>
         </div>
       </div>
@@ -118,26 +155,57 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Test Results Banner */}
+      {showTestResults && testResults && (
+        <div className="bg-green-100 dark:bg-green-900 border-l-4 border-green-500 p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <span className="text-green-500 text-xl">🎉</span>
+            </div>
+            <div className="ml-3 flex-1">
+              <p className="text-green-700 dark:text-green-300 font-medium text-lg">
+                {testResults.message || 'Тест амжилттай дууслаа!'}
+              </p>
+              <div className="flex gap-6 mt-2 text-green-600 dark:text-green-400 text-sm">
+                <span>Үнэлгээ: <strong>{testResults.score}%</strong></span>
+                <span>Түвшин: <strong>{testResults.level}</strong></span>
+                <span>Зөв хариулт: <strong>
+                  {testResults.correctAnswers !== undefined ? `${testResults.correctAnswers}/${testResults.totalQuestions}` : `${latestTestStats.correct}/${latestTestStats.total}`}
+                </strong></span>
+                <span>Үнэлгээ: <strong className={getGradeColor(testResults.score)}>
+                  {getGradeText(testResults.score)}
+                </strong></span>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowTestResults(false)}
+              className="ml-auto text-green-700 dark:text-green-300 hover:text-green-900 text-lg"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Welcome back, {user?.name}!
+                Сайн байна уу, {user?.name}!
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                Grade {user?.grade} • {user?.goals?.join(', ')}
+                {user?.grade} анги • {user?.goals?.join(', ')}
               </p>
             </div>
             <div className="text-right">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Subscription Status</div>
-              <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                user?.subscriptionStatus === 'active' 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-gray-100 text-gray-800'
-              }`}>
-                {user?.subscriptionStatus || 'Inactive'}
+              <div className="text-sm text-gray-500 dark:text-gray-400">Хэрэглэгчийн төлөв</div>
+              <div className={`px-2 py-1 rounded-full text-xs font-medium ${user?.subscriptionStatus === 'active'
+                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                }`}>
+                {user?.subscriptionStatus === 'active' ? 'Идэвхтэй' : 'Идэвхгүй'}
               </div>
             </div>
           </div>
@@ -154,76 +222,119 @@ const DashboardPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100">
-                      Ready for a Level Check?
+                      Дахын тест өгөх бэлэн үү?
                     </h3>
                     <p className="text-blue-700 dark:text-blue-300">
-                      Take a quick test to see how much you've improved!
+                      Хэр зэрэг сайжруулсангаа харахын тулд шуурхай тест өгөөрэй!
                     </p>
                   </div>
                   <button
                     onClick={handleRetestClick}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                   >
-                    Take Test
+                    Тест өгөх
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Recommended Lessons */}
+            {/* Test Results Card - Shows when test is completed */}
+            {showTestResults && testResults && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+                <div className="p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                    Таны Тестийн Үр Дүн
+                  </h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                        {testResults.score}%
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Нийт Үнэлгээ</div>
+                    </div>
+
+                    <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {testResults.level}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Түвшин</div>
+                    </div>
+
+                    <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className={`text-2xl font-bold ${getGradeColor(testResults.score)}`}>
+                        {getGradeText(testResults.score).split(' ')[0]}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Үнэлгээ</div>
+                    </div>
+
+                    <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                        {testResults.correctAnswers !== undefined ? testResults.correctAnswers : latestTestStats.correct}/{testResults.totalQuestions !== undefined ? testResults.totalQuestions : latestTestStats.total}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">Зөв хариулт</div>
+                    </div>
+                  </div>
+
+                  {testResults.weakTopics && testResults.weakTopics.length > 0 && (
+                    <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900 rounded-lg">
+                      <h3 className="text-lg font-medium text-yellow-800 dark:text-yellow-200 mb-2">
+                        Сайжруулах шаардлагатай сэдвүүд:
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {testResults.weakTopics.map((topic: string, index: number) => (
+                          <span key={index} className="px-3 py-1 bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 rounded-full text-sm">
+                            {topic}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-6 text-center">
+                    <button
+                      onClick={() => navigate('/physic/EYSH_beltgel')}
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Дараагийн хичээлээ үзэх
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Quick Stats */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
               <div className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  Recommended Lessons
+                  Хурдан Статистик
                 </h2>
-                
-                {recommendations?.lessons && recommendations.lessons.length > 0 ? (
-                  <div className="space-y-4">
-                    {recommendations.lessons.map((lesson) => (
-                      <div
-                        key={lesson.id}
-                        onClick={() => handleLessonClick(lesson.id)}
-                        className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <span className="text-lg">{getTypeIcon(lesson.type)}</span>
-                              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                                {lesson.title}
-                              </h3>
-                            </div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                              Grade {lesson.grade} • {lesson.topics.join(', ')}
-                            </p>
-                            <div className="flex items-center space-x-2">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(lesson.difficulty)}`}>
-                                Level {lesson.difficulty}
-                              </span>
-                              <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                                {lesson.type}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {testHistory.length}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Тестийн тоо</div>
                   </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500 dark:text-gray-400">
-                      No recommendations available yet. Complete your placement test to get personalized lesson recommendations.
-                    </p>
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {latestTestStats.correct}/{latestTestStats.total}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Сүүлийн тест</div>
                   </div>
-                )}
-
-                {recommendations?.rationale && (
-                  <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      <strong>Why these lessons?</strong> {recommendations.rationale}
-                    </p>
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {testHistory.length > 0 ? Math.round(testHistory.reduce((sum, attempt) => sum + attempt.score, 0) / testHistory.length) : (testResults?.score || 0)}%
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Дундаж</div>
                   </div>
-                )}
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {testResults?.level || user?.currentLevel || 'N/A'}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Түвшин</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -233,27 +344,37 @@ const DashboardPage: React.FC = () => {
             {/* Progress Overview */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Your Progress
+                Таны Амжилт
               </h3>
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600 dark:text-gray-400">Current Level</span>
+                    <span className="text-gray-600 dark:text-gray-400">Одоогийн Түвшин</span>
                     <span className="font-medium text-gray-900 dark:text-white">
-                      {user?.currentLevel || 'Not assessed'}
+                      {testResults?.level || user?.currentLevel || 'Тодорхойгүй'}
                     </span>
                   </div>
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600 dark:text-gray-400">Lessons Completed</span>
-                    <span className="font-medium text-gray-900 dark:text-white">0</span>
+                    <span className="text-gray-600 dark:text-gray-400">Сүүлийн Үнэлгээ</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {testResults?.score ? `${testResults.score}%` : testHistory[0]?.score ? `${testHistory[0].score}%` : '0%'}
+                    </span>
                   </div>
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600 dark:text-gray-400">Tests Taken</span>
-                    <span className="font-medium text-gray-900 dark:text-white">1</span>
+                    <span className="text-gray-600 dark:text-gray-400">Зөв хариулт</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {latestTestStats.correct}/{latestTestStats.total}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600 dark:text-gray-400">Тестийн Тоо</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{testHistory.length}</span>
                   </div>
                 </div>
               </div>
@@ -262,42 +383,27 @@ const DashboardPage: React.FC = () => {
             {/* Quick Actions */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Quick Actions
+                Хурдан Үйлдлүүд
               </h3>
               <div className="space-y-3">
                 <button
-                  onClick={() => navigate('/lessons')}
+                  onClick={() => navigate('/physic/EYSH_beltgel')}
                   className="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"
                 >
-                  Browse All Lessons
+                  ЭЕШ Бодлогууд
                 </button>
                 <button
                   onClick={() => navigate('/search')}
                   className="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"
                 >
-                  Search Lessons
+                  Хичээл Хайх
                 </button>
-                {user?.subscriptionStatus !== 'active' && (
-                  <button
-                    onClick={() => navigate('/pay')}
-                    className="w-full text-left px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-md"
-                  >
-                    Upgrade Subscription
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Next Steps */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Next Steps
-              </h3>
-              <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-                <p>1. Complete recommended lessons</p>
-                <p>2. Practice with exercises</p>
-                <p>3. Take progress tests</p>
-                <p>4. Track your improvement</p>
+                <button
+                  onClick={handleRetestClick}
+                  className="w-full text-left px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-md"
+                >
+                  Дахин Тест Өгөх
+                </button>
               </div>
             </div>
           </div>

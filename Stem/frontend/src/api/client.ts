@@ -1,5 +1,18 @@
 const API_BASE_URL = 'http://localhost:4000/api';
 
+interface TestAttempt {
+  attemptId: string;
+  items: Array<{
+    questionId: string;
+    answer: string | number;
+    correct: boolean;
+    score: number;
+    topicTags: string[];
+  }>;
+  totalScore: number;
+  levelEstimate?: string;
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -13,13 +26,13 @@ class ApiClient {
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
-    // Don't set Content-Type if it's explicitly set to undefined
     const headers: Record<string, string> = {};
     const contentType = (options.headers as any)?.['Content-Type'];
     if (contentType !== undefined) {
       // Content-Type is explicitly set, don't override it
+    } else if (options.method === 'POST' && !options.body) {
+      // Don't set Content-Type for empty POST requests
     } else {
-      // Content-Type is not set, use default
       headers['Content-Type'] = 'application/json';
     }
 
@@ -29,8 +42,14 @@ class ApiClient {
         ...headers,
         ...options.headers,
       },
-      credentials: 'include', // Include cookies for authentication
+      credentials: 'include',
     });
+
+    // Don't try to refresh token for auth endpoints to avoid infinite loops
+    if (response.status === 401 && !endpoint.includes('/auth/')) {
+      console.warn('🔐 API: Authentication required for', endpoint);
+      // Let the calling code handle auth-required endpoints gracefully
+    }
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Unknown error' }));
@@ -65,25 +84,11 @@ class ApiClient {
   async logout() {
     return this.request('/auth/logout', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}), // ✅ Add empty JSON body
     });
-  }
-
-  async refreshToken() {
-    // Use a custom request method that doesn't set Content-Type
-    const url = `${this.baseUrl}/auth/refresh`;
-
-    const response = await fetch(url, {
-      method: 'POST',
-      credentials: 'include', // Include cookies for authentication
-      // No Content-Type header - let browser handle it
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
   }
 
   // Test endpoints
@@ -92,13 +97,11 @@ class ApiClient {
     return this.request(`/tests/placement${params}`);
   }
 
-  // FIXED: Added TypeScript types
   async getTestById(testId: string) {
     return this.request(`/tests/${testId}`);
   }
 
-  // FIXED: Added TypeScript types
-  async submitTestAttempt(data: any) {
+  async submitTestAttempt(data: any): Promise<TestAttempt> {
     return this.request('/tests/attempt', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -113,6 +116,11 @@ class ApiClient {
   async getLessons(params?: any) {
     const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
     return this.request(`/lessons${queryString}`);
+  }
+
+  // ✅ FIXED: Moved getAvailableTests to correct position
+  async getAvailableTests() {
+    return this.request('/tests/available');
   }
 
   async getLessonsByGrade(grade: string) {
@@ -154,7 +162,7 @@ class ApiClient {
     return this.request(`/payments/status/${sessionId}`);
   }
 
-  // Admin endpoints
+  // Admin endpoints - THESE WILL FAIL WITHOUT ADMIN AUTH
   async createLesson(data: any) {
     return this.request('/admin/lessons', {
       method: 'POST',
@@ -178,6 +186,10 @@ class ApiClient {
 
   async getTests() {
     return this.request('/admin/tests');
+  }
+
+  async getTestHistory() {
+    return this.request('/auth/test-history');
   }
 
   async getAdminStats() {

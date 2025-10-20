@@ -78,7 +78,47 @@ function TestPage() {
             });
 
             console.log('🔍 Submission result:', result);
-            navigate(`/physic/test/results/${result.attemptId}`);
+
+            // ✅ FIXED: Properly calculate correct answers
+            let correctAnswers = 0;
+            let totalQuestions = test.questions.length;
+
+            if (result.items && Array.isArray(result.items)) {
+                // Count correct answers from the result items
+                correctAnswers = result.items.filter(item => item.correct === true).length;
+                console.log('🔍 Correct answers calculation:', {
+                    totalItems: result.items.length,
+                    correctCount: correctAnswers,
+                    items: result.items.map(item => ({ correct: item.correct, score: item.score }))
+                });
+            } else {
+                // Fallback: if items array is not available, estimate from totalScore
+                correctAnswers = Math.round((result.totalScore / 100) * totalQuestions);
+                console.log('🔍 Using fallback calculation:', {
+                    totalScore: result.totalScore,
+                    estimatedCorrect: correctAnswers
+                });
+            }
+
+            console.log('🔍 Final stats:', {
+                correct: correctAnswers,
+                total: totalQuestions,
+                score: result.totalScore
+            });
+
+            // Navigate to dashboard with correct answers data
+            navigate('/dashboard', {
+                state: {
+                    testCompleted: true,
+                    testScore: result.totalScore,
+                    levelEstimate: result.levelEstimate,
+                    weakTopics: result.weakTopics || [],
+                    correctAnswers: correctAnswers,
+                    totalQuestions: totalQuestions,
+                    message: 'Тест амжилттай дууслаа!'
+                },
+                replace: true
+            });
         } catch (error) {
             console.error('🔍 Failed to submit test:', error);
         } finally {
@@ -86,6 +126,7 @@ function TestPage() {
         }
     }
 
+    // ✅ FIXED: Moved the JSX return outside of handleSubmitTest function
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-gray-900 dark:to-black flex items-center justify-center">
@@ -171,8 +212,8 @@ function TestPage() {
                             <label
                                 key={option.id}
                                 className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${answers[question.id] === option.id
-                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                                     }`}
                             >
                                 <input
@@ -184,8 +225,8 @@ function TestPage() {
                                     className="hidden"
                                 />
                                 <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3 ${answers[question.id] === option.id
-                                        ? 'border-blue-500 bg-blue-500'
-                                        : 'border-gray-400 dark:border-gray-500'
+                                    ? 'border-blue-500 bg-blue-500'
+                                    : 'border-gray-400 dark:border-gray-500'
                                     }`}>
                                     {answers[question.id] === option.id && (
                                         <div className="w-2 h-2 rounded-full bg-white"></div>

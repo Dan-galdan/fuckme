@@ -24,8 +24,8 @@ import HolbooBarih from './Pages/HolbooBarih';
 import Header from './components/Header/Header';
 import PhoneHeader from './components/Header/phoneHeader';
 
+// ✅ ADD THIS IMPORT
 import TestPage from './Pages/TestPage';
-
 
 // New pages
 import RegisterPage from './Pages/Register';
@@ -77,9 +77,11 @@ function App() {
               element={<LessonTemplate />}
             />
 
+            {/* ✅ ADD THIS ROUTE */}
+            <Route path="/physic/test/:testId" element={<TestPage />} />
+
             <Route path="/physic/EYSH_beltgel" element={<EYSHlist hicheel={hicheel} />} />
             <Route path="/physic/EYSH_beltgel/:name" element={<EYSHtemplate hicheel={hicheel} />} />
-            <Route path="/physic/test/:testId" element={<TestPage />} />
 
             <Route path='/chemistry' element={<Chemistry />} />
 

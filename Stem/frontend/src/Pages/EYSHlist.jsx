@@ -4,32 +4,95 @@ import PhoneFooter from '../components/phoneFooter'
 import Footer from '../components/Footer'
 import Lister from '../components/Body/Lister';
 import PhoneHeader from '../components/Header/phoneHeader'
-import { apiClient } from '../api/client'; // Import your API client
+import { apiClient } from '../api/client';
 
 function EYSHlist({ hicheel }) {
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [filteredHicheel, setFilteredHicheel] = useState(hicheel);
-  const [tests, setTests] = useState([]); // NEW: Store tests from database
-  const [combinedItems, setCombinedItems] = useState([]); // NEW: Combined lessons + tests
+  const [tests, setTests] = useState([]);
+  const [combinedItems, setCombinedItems] = useState([]);
 
-  // NEW: Fetch tests from your backend
+  // Fetch actual tests from your database
   useEffect(() => {
     async function fetchTests() {
       try {
-        console.log('🔍 Fetching tests from API...');
-        const testsData = await apiClient.getTests();
-        console.log('🔍 Tests data received:', testsData);
-        console.log('🔍 Number of tests:', testsData.tests?.length);
-        setTests(testsData.tests || []);
+        console.log('🔍 Fetching actual tests from database...');
+
+        // Try different endpoints to get your created tests
+        let testsData = null;
+
+        try {
+          // First try the admin endpoint (if you have admin access)
+          testsData = await apiClient.getTests();
+          console.log('🔍 Admin tests data received:', testsData);
+        } catch (adminError) {
+          console.log('🔍 Admin endpoint failed, trying available tests...');
+          try {
+            // Try available tests endpoint
+            testsData = await apiClient.getAvailableTests();
+            console.log('🔍 Available tests data received:', testsData);
+          } catch (availableError) {
+            console.log('🔍 Available tests endpoint failed, trying placement test...');
+            // Fallback to placement test
+            testsData = await apiClient.getPlacementTest();
+            console.log('🔍 Placement test data received:', testsData);
+          }
+        }
+
+        // Process the tests data based on the response structure
+        let processedTests = [];
+
+        if (testsData) {
+          // Handle different response structures
+          if (Array.isArray(testsData)) {
+            // Direct array of tests
+            processedTests = testsData.map(test => ({
+              id: test.id || test._id,
+              title: test.title,
+              description: test.description,
+              isPlacement: test.isPlacement || false
+            }));
+          } else if (testsData.tests && Array.isArray(testsData.tests)) {
+            // Response with { tests: [...] }
+            processedTests = testsData.tests.map(test => ({
+              id: test.id || test._id,
+              title: test.title,
+              description: test.description,
+              isPlacement: test.isPlacement || false
+            }));
+          } else if (testsData.id) {
+            // Single test object (like placement test)
+            processedTests = [{
+              id: testsData.id,
+              title: testsData.title,
+              description: testsData.description,
+              isPlacement: true
+            }];
+          } else if (testsData.questions) {
+            // Placement test with questions array
+            processedTests = [{
+              id: 'placement',
+              title: testsData.title || 'Түвшин тогтоох тест',
+              description: testsData.description || 'Математик, физикийн мэдлэгийн түвшинг тогтоох тест',
+              isPlacement: true
+            }];
+          }
+        }
+
+        console.log('🔍 Processed tests:', processedTests);
+        setTests(processedTests);
+
       } catch (error) {
-        console.error('🔍 Failed to fetch tests:', error);
+        console.error('❌ Failed to fetch tests from all endpoints:', error);
+        // If all endpoints fail, show empty array (no tests)
+        setTests([]);
       }
     }
     fetchTests();
   }, []);
 
-  // NEW: Combine lessons and tests
+  // Combine lessons and tests
   useEffect(() => {
     // Convert tests to the same format as hicheel
     const testItems = tests.map(test => ({
@@ -37,14 +100,15 @@ function EYSHlist({ hicheel }) {
       name: `test-${test.id}`,
       title: test.title,
       description: test.description,
-      type: 'test', // Mark as test for filtering
-      path: `/physic/test/${test.id}`, // Create a test taking route
-      isTest: true // Flag to identify as test
+      type: 'test',
+      path: test.isPlacement ? '/placement' : `/physic/test/${test.id}`,
+      isTest: true
     }));
 
     // Combine hicheel lessons and tests
     const allItems = [...hicheel, ...testItems];
     setCombinedItems(allItems);
+    console.log('🔍 Combined items:', allItems.length, 'total (', hicheel.length, 'lessons +', testItems.length, 'tests)');
   }, [hicheel, tests]);
 
   // Filter combined items
@@ -55,9 +119,9 @@ function EYSHlist({ hicheel }) {
     if (selectedYear) {
       const yearNum = parseInt(selectedYear);
       filtered = filtered.filter(item => {
-        // For tests, use current year or creation date
+        // For tests, show all tests regardless of year filter
         if (item.isTest) {
-          return selectedYear === '2024'; // Or get year from test data
+          return true;
         }
 
         // For lessons, use existing logic
@@ -74,7 +138,7 @@ function EYSHlist({ hicheel }) {
     if (selectedType) {
       filtered = filtered.filter(item => {
         if (selectedType === 'test') {
-          return item.isTest; // Show only tests
+          return item.isTest;
         } else if (selectedType === 'video') {
           return !item.isTest && (item.type === 'video' || item.title.toLowerCase().includes('видео') || item.title.toLowerCase().includes('тайлбар'));
         } else if (selectedType === 'exercise') {
@@ -85,6 +149,7 @@ function EYSHlist({ hicheel }) {
     }
 
     setFilteredHicheel(filtered);
+    console.log('🔍 Filtered items:', filtered.length, 'after filters (year:', selectedYear, 'type:', selectedType, ')');
   }, [selectedYear, selectedType, combinedItems]);
 
   return (
@@ -107,7 +172,7 @@ function EYSHlist({ hicheel }) {
               ))}
             </select>
 
-            {/* Type Filter - Updated to include tests */}
+            {/* Type Filter */}
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
@@ -115,7 +180,7 @@ function EYSHlist({ hicheel }) {
             >
               <option value="">Бүгд</option>
               <option value="video">Видео/Хичээл</option>
-              <option value="test">Тест/Сорил</option> {/* NEW OPTION */}
+              <option value="test">Тест/Сорил</option>
               <option value="exercise">Дасгал/Бодлого</option>
             </select>
 
@@ -135,15 +200,15 @@ function EYSHlist({ hicheel }) {
                   title={data.title}
                   name={data.name}
                   path={data.path}
-                  type={data.isTest ? "test" : "eyesh"} // Pass type for styling
-                  description={data.description} // Add description for tests
-                  isTest={data.isTest} // Pass test flag
+                  type={data.isTest ? "test" : "eyesh"}
+                  description={data.description}
+                  isTest={data.isTest}
                 />
               </div>
             ))
           ) : (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              {selectedYear || selectedType ? 'Бодлого/сорил олдсонгүй' : 'Бодлого/сорил олдсонгүй'}
+              {tests.length === 0 ? 'Сорил байхгүй байна' : 'Бодлого/сорил олдсонгүй'}
             </div>
           )}
         </div>
@@ -153,4 +218,4 @@ function EYSHlist({ hicheel }) {
   );
 }
 
-export default EYSHlist
+export default EYSHlist;
