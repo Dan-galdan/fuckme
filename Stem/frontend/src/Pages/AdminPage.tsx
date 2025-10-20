@@ -14,6 +14,10 @@ interface CreateTestResponse {
   message: string;
 }
 
+interface CreateQuestionResponse {
+  id: string;
+  message: string;
+}
 
 function AdminPage() {
   const { user } = useAuthStore();
@@ -48,10 +52,19 @@ function AdminPage() {
     isActive: true,
   });
 
+  // Add question form state
+  const [questionForm, setQuestionForm] = useState({
+    stem: '',
+    kind: 'mcq' as 'mcq' | 'numeric' | 'short_text',
+    options: [{ id: '1', text: '', isCorrect: false }],
+    answerKey: '',
+    topics: '',
+    difficulty: 3,
+  });
+
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
 
   if (!isAdmin) {
     return (
@@ -68,7 +81,6 @@ function AdminPage() {
     setIsLoading(true);
 
     try {
-      // Validate required fields
       if (!lessonForm.title.trim()) {
         throw new Error('Title is required');
       }
@@ -84,11 +96,9 @@ function AdminPage() {
         isPublished: lessonForm.isPublished,
       };
 
-      // FIX: Add type assertion for the response
       const res = await apiClient.createLesson(payload) as CreateLessonResponse;
       setStatus(`Lesson created successfully: ${res.id}`);
 
-      // Reset form
       setLessonForm({
         ...lessonForm,
         title: '',
@@ -119,7 +129,14 @@ function AdminPage() {
         throw new Error('At least one question ID is required');
       }
 
-      const questionRefs = questionIds.map((id) => ({ questionId: id, weight: 1 }));
+      // You need to fetch the questions to get their difficulties
+      // For now, set a default difficulty of 3
+      const questionRefs = questionIds.map((id) => ({
+        questionId: id,
+        weight: 1,
+        difficulty: 3 // ADD THIS - default difficulty
+      }));
+
       const payload = {
         type: 'placement' as const,
         title: testForm.title.trim() || 'EESH Placement Test',
@@ -130,12 +147,10 @@ function AdminPage() {
         questionRefs,
         isActive: testForm.isActive,
       };
-      ``
-      // FIX: Add type assertion for the response
+
       const res = await apiClient.createTest(payload) as CreateTestResponse;
       setStatus(`Test created successfully: ${res.id}`);
 
-      // Reset form
       setTestForm({
         ...testForm,
         title: '',
@@ -149,6 +164,94 @@ function AdminPage() {
       setIsLoading(false);
     }
   }
+
+  // Add question creation function
+  async function handleCreateQuestion(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus(null);
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      if (!questionForm.stem.trim()) {
+        throw new Error('Question text is required');
+      }
+
+      const payload: any = {
+        stem: questionForm.stem.trim(),
+        kind: questionForm.kind,
+        topics: questionForm.topics.split(',').map((t) => t.trim()).filter(Boolean),
+        difficulty: Number(questionForm.difficulty),
+      };
+
+      // Handle different question types
+      if (questionForm.kind === 'mcq') {
+        payload.options = questionForm.options;
+        const correctOption = questionForm.options.find(opt => opt.isCorrect);
+        if (!correctOption) {
+          throw new Error('Please select a correct option for multiple choice question');
+        }
+
+        // DEBUG: Log what we're sending
+        console.log('🔍 MCQ - Correct option:', correctOption);
+        console.log('🔍 MCQ - AnswerKey being set to:', correctOption.id);
+
+        // Try using the option TEXT instead of ID
+        payload.answerKey = correctOption.text;
+      } else {
+        if (!questionForm.answerKey.trim()) {
+          throw new Error('Answer key is required for this question type');
+        }
+
+        // For numeric questions, convert to number
+        if (questionForm.kind === 'numeric') {
+          payload.answerKey = Number(questionForm.answerKey);
+        } else {
+          payload.answerKey = questionForm.answerKey.trim();
+        }
+      }
+
+      console.log('🔍 FULL PAYLOAD BEING SENT:', payload);
+
+      const res = await apiClient.createQuestion(payload) as CreateQuestionResponse;
+      setStatus(`Question created successfully: ${res.id}`);
+
+      // Reset form
+      setQuestionForm({
+        stem: '',
+        kind: 'mcq',
+        options: [{ id: '1', text: '', isCorrect: false }],
+        answerKey: '',
+        topics: '',
+        difficulty: 3,
+      });
+    } catch (err: any) {
+      console.error('🔍 Question creation error:', err);
+      setError(err?.message || 'Failed to create question');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  // Add option management functions
+  const addOption = () => {
+    const newOptions = [...questionForm.options, {
+      id: String(questionForm.options.length + 1),
+      text: '',
+      isCorrect: false
+    }];
+    setQuestionForm({ ...questionForm, options: newOptions });
+  };
+
+  const removeOption = (index: number) => {
+    const newOptions = questionForm.options.filter((_, i) => i !== index);
+    setQuestionForm({ ...questionForm, options: newOptions });
+  };
+
+  const updateOption = (index: number, field: string, value: any) => {
+    const newOptions = [...questionForm.options];
+    newOptions[index] = { ...newOptions[index], [field]: value };
+    setQuestionForm({ ...questionForm, options: newOptions });
+  };
 
   return (
     <div className="p-4 max-w-3xl mx-auto">
@@ -165,6 +268,114 @@ function AdminPage() {
           {error}
         </div>
       )}
+
+      {/* Create Question Section - ADDED */}
+      <section className="mb-8 p-6 border rounded-lg bg-white shadow-sm">
+        <h2 className="text-xl font-semibold mb-4">Create Question</h2>
+        <form onSubmit={handleCreateQuestion} className="grid gap-4">
+          <textarea
+            placeholder="Question text *"
+            value={questionForm.stem}
+            onChange={(e) => setQuestionForm({ ...questionForm, stem: e.target.value })}
+            className="border p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 h-20"
+            required
+          />
+
+          <select
+            value={questionForm.kind}
+            onChange={(e) => setQuestionForm({ ...questionForm, kind: e.target.value as any })}
+            className="border p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="mcq">Multiple Choice</option>
+            <option value="numeric">Numeric Answer</option>
+            <option value="short_text">Short Text</option>
+          </select>
+
+          {questionForm.kind === 'mcq' && (
+            <div className="space-y-2">
+              <label className="font-medium">Options:</label>
+              {questionForm.options.map((option, index) => (
+                <div key={option.id} className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    placeholder={`Option ${index + 1}`}
+                    value={option.text}
+                    onChange={(e) => updateOption(index, 'text', e.target.value)}
+                    className="border p-2 rounded flex-1"
+                  />
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      name="correct-option"
+                      checked={option.isCorrect}
+                      onChange={() => {
+                        const newOptions = questionForm.options.map((opt, i) => ({
+                          ...opt,
+                          isCorrect: i === index
+                        }));
+                        setQuestionForm({ ...questionForm, options: newOptions });
+                      }}
+                    />
+                    <span>Correct</span>
+                  </label>
+                  {questionForm.options.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeOption(index)}
+                      className="bg-red-500 text-white px-2 py-1 rounded text-sm"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addOption}
+                className="bg-gray-500 text-white px-3 py-1 rounded text-sm"
+              >
+                Add Option
+              </button>
+            </div>
+          )}
+
+          {questionForm.kind !== 'mcq' && (
+            <input
+              placeholder={questionForm.kind === 'numeric' ? 'Correct number *' : 'Correct answer *'}
+              value={questionForm.answerKey}
+              onChange={(e) => setQuestionForm({ ...questionForm, answerKey: e.target.value })}
+              className="border p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          )}
+
+          <input
+            placeholder="Topics (comma separated) *"
+            value={questionForm.topics}
+            onChange={(e) => setQuestionForm({ ...questionForm, topics: e.target.value })}
+            className="border p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+
+          <input
+            type="number"
+            min={1}
+            max={5}
+            placeholder="Difficulty (1-5)"
+            value={questionForm.difficulty}
+            onChange={(e) => setQuestionForm({ ...questionForm, difficulty: Number(e.target.value) })}
+            className="border p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="bg-purple-600 text-white px-4 py-3 rounded hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Creating...' : 'Create Question'}
+          </button>
+        </form>
+      </section>
 
       <section className="mb-8 p-6 border rounded-lg bg-white shadow-sm">
         <h2 className="text-xl font-semibold mb-4">Create Lesson</h2>

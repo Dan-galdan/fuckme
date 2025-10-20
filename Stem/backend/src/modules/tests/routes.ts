@@ -313,7 +313,46 @@ export default async function testRoutes(fastify: FastifyInstance) {
 
     return response;
   });
+  // In backend test routes
+  // Get specific test by ID
+  fastify.get('/:id', async (request, reply) => {
+    const { id } = request.params as any;
 
+    console.log('🔍 Looking for test with ID:', id);
+
+    const test = await Test.findById(id).populate('questionRefs.questionId');
+    if (!test) {
+      console.log('🔍 Test not found:', id);
+      return reply.status(404).send({
+        error: 'Test not found',
+        message: 'The specified test does not exist'
+      });
+    }
+
+    console.log('🔍 Found test:', test.title, 'with', test.questionRefs.length, 'questions');
+
+    // Return the actual test with its questions
+    return {
+      id: (test._id as any).toString(),
+      title: test.title,
+      description: test.description,
+      timeLimitSec: test.timeLimitSec,
+      questions: test.questionRefs.map((ref: any) => {
+        const question = ref.questionId;
+        return {
+          id: question._id.toString(),
+          stem: question.stem,
+          kind: question.kind,
+          options: question.options?.map((opt: any) => ({
+            id: opt.id,
+            text: opt.text
+          })) || [],
+          difficulty: question.difficulty,
+          topics: question.topics
+        };
+      })
+    };
+  });
   // Get retest schedule
   fastify.get('/retest/schedule', async (request, reply) => {
     const token = request.cookies.accessToken;

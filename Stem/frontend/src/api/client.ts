@@ -12,7 +12,7 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     // Don't set Content-Type if it's explicitly set to undefined
     const headers: Record<string, string> = {};
     const contentType = (options.headers as any)?.['Content-Type'];
@@ -22,7 +22,7 @@ class ApiClient {
       // Content-Type is not set, use default
       headers['Content-Type'] = 'application/json';
     }
-    
+
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -71,7 +71,7 @@ class ApiClient {
   async refreshToken() {
     // Use a custom request method that doesn't set Content-Type
     const url = `${this.baseUrl}/auth/refresh`;
-    
+
     const response = await fetch(url, {
       method: 'POST',
       credentials: 'include', // Include cookies for authentication
@@ -92,6 +92,12 @@ class ApiClient {
     return this.request(`/tests/placement${params}`);
   }
 
+  // FIXED: Added TypeScript types
+  async getTestById(testId: string) {
+    return this.request(`/tests/${testId}`);
+  }
+
+  // FIXED: Added TypeScript types
   async submitTestAttempt(data: any) {
     return this.request('/tests/attempt', {
       method: 'POST',
@@ -168,6 +174,10 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+
+  async getTests() {
+    return this.request('/admin/tests');
   }
 
   async getAdminStats() {

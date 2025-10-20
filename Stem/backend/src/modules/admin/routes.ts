@@ -113,9 +113,9 @@ export default async function adminRoutes(fastify: FastifyInstance) {
   // Add this route to your existing adminRoutes function
   // Get all tests (ADD THIS BEFORE OR AFTER THE STATS ENDPOINT)
   fastify.get('/tests', async (request, reply) => {
-    const tests = await Test.find({})
-      .sort({ createdAt: -1 })
-      .select('_id title description type gradeRange topics timeLimitSec isActive createdAt');
+    const tests = await Test.find({ isActive: true })
+      .sort({ _id: -1 })
+      .select('_id title description type gradeRange topics timeLimitSec isActive');
 
     return {
       tests: tests.map(test => ({
