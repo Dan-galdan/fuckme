@@ -50,17 +50,13 @@ const DashboardPage: React.FC = () => {
     loadDashboardData();
   }, [isAuthenticated, navigate, state]);
 
-  // In Dashboard.tsx, update the loadDashboardData function:
   const loadDashboardData = async () => {
     try {
       console.log('🔍 Dashboard: Loading data...');
-
-      // Load retest schedule (this should work even without auth)
       const scheduleData = await apiClient.getRetestSchedule();
       console.log('📊 Dashboard: Received retest schedule:', scheduleData);
       setRetestSchedule(scheduleData);
 
-      // Try to load test history, but handle auth errors gracefully
       try {
         const historyData = await apiClient.getTestHistory();
         console.log('📊 Dashboard: Received test history:', historyData);
@@ -68,13 +64,11 @@ const DashboardPage: React.FC = () => {
         setTestHistory(attempts);
       } catch (historyError: any) {
         console.warn('⚠️ Dashboard: Could not load test history (auth required):', historyError.message);
-        // Set empty history - this is normal for new/unauthenticated users
         setTestHistory([]);
       }
 
     } catch (error: any) {
       console.error('❌ Dashboard: Error loading critical data:', error);
-      // Only show error for critical failures, not for optional features like test history
       if (!error.message.includes('test-history') && !error.message.includes('auth')) {
         setError(error.message || 'Failed to load dashboard data');
       }
@@ -307,7 +301,7 @@ const DashboardPage: React.FC = () => {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
               <div className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  Хурдан Статистик
+                  Статистик
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -380,30 +374,26 @@ const DashboardPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Хурдан Үйлдлүүд
+            {/* Quick Actions - NEW DESIGN */}
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+                ⚡ Үйлдлүүд
               </h3>
-              <div className="space-y-3">
-                <button
-                  onClick={() => navigate('/physic/EYSH_beltgel')}
-                  className="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"
-                >
-                  ЭЕШ Бодлогууд
-                </button>
-                <button
-                  onClick={() => navigate('/search')}
-                  className="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"
-                >
-                  Хичээл Хайх
-                </button>
-                <button
-                  onClick={handleRetestClick}
-                  className="w-full text-left px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-md"
-                >
-                  Дахин Тест Өгөх
-                </button>
+              <div className="space-y-4">
+                {[
+                  { label: 'ЭЕШ Бодлогууд', icon: '📚', path: '/physic/EYSH_beltgel', color: 'from-blue-500 to-cyan-500' },
+                  { label: 'Хичээл Хайх', icon: '🔍', path: '/search', color: 'from-green-500 to-emerald-500' },
+                  { label: 'Дахин Тест Өгөх', icon: '🔄', onClick: handleRetestClick, color: 'from-purple-500 to-pink-500' }
+                ].map((action, index) => (
+                  <button
+                    key={index}
+                    onClick={action.onClick || (() => navigate(action.path!))}
+                    className={`w-full px-6 py-4 bg-gradient-to-r ${action.color} text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 font-bold text-left flex items-center space-x-3`}
+                  >
+                    <span className="text-xl">{action.icon}</span>
+                    <span>{action.label}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
