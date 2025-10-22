@@ -7,7 +7,6 @@ import { verifyAccessToken } from '../../utils/auth.js';
 
 export default async function testRoutes(fastify: FastifyInstance) {
   // Get placement test
-  // Get placement test
   fastify.get('/placement', {
     schema: {
       querystring: {
@@ -107,10 +106,12 @@ export default async function testRoutes(fastify: FastifyInstance) {
         kind: ref.questionId.kind,
         options: ref.questionId.options?.map((opt: any) => ({
           id: opt.id,
-          text: opt.text
+          text: opt.text,
+          imageUrl: opt.imageUrl // ✅ ADD THIS LINE
         })) || [],
         difficulty: ref.questionId.difficulty,
-        topics: ref.questionId.topics
+        topics: ref.questionId.topics,
+        imageUrl: ref.questionId.imageUrl // ✅ ADD THIS LINE
       }))
     };
 
@@ -313,7 +314,7 @@ export default async function testRoutes(fastify: FastifyInstance) {
 
     return response;
   });
-  // In backend test routes
+
   // Get specific test by ID
   fastify.get('/:id', async (request, reply) => {
     const { id } = request.params as any;
@@ -339,20 +340,32 @@ export default async function testRoutes(fastify: FastifyInstance) {
       timeLimitSec: test.timeLimitSec,
       questions: test.questionRefs.map((ref: any) => {
         const question = ref.questionId;
+
+        // ✅ ADD DEBUGGING TO SEE IF IMAGE EXISTS
+        console.log('🖼️ Backend - Question image data:', {
+          id: question._id.toString(),
+          hasImage: !!question.imageUrl,
+          imageUrl: question.imageUrl,
+          optionsWithImages: question.options?.filter((opt: any) => opt.imageUrl).length || 0
+        });
+
         return {
           id: question._id.toString(),
           stem: question.stem,
           kind: question.kind,
           options: question.options?.map((opt: any) => ({
             id: opt.id,
-            text: opt.text
+            text: opt.text,
+            imageUrl: opt.imageUrl // ✅ ADD THIS LINE
           })) || [],
           difficulty: question.difficulty,
-          topics: question.topics
+          topics: question.topics,
+          imageUrl: question.imageUrl // ✅ ADD THIS LINE
         };
       })
     };
   });
+
   // Get retest schedule
   fastify.get('/retest/schedule', async (request, reply) => {
     const token = request.cookies.accessToken;
@@ -408,6 +421,7 @@ export default async function testRoutes(fastify: FastifyInstance) {
   });
 }
 
+// Helper functions - MOVE THESE OUTSIDE THE MAIN FUNCTION
 function checkAnswer(question: any, answer: any): boolean {
   // Handle null/undefined answers
   if (answer === null || answer === undefined) {

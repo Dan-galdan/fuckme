@@ -53,7 +53,8 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     };
   });
 
-  // Create question
+  // In your admin routes
+  // In your admin routes
   fastify.post('/questions', {
     schema: {
       body: {
@@ -64,13 +65,22 @@ export default async function adminRoutes(fastify: FastifyInstance) {
           options: { type: 'array' },
           answerKey: { oneOf: [{ type: 'string' }, { type: 'number' }] },
           topics: { type: 'array', items: { type: 'string' } },
-          difficulty: { type: 'number', minimum: 1, maximum: 5 }
+          difficulty: { type: 'number', minimum: 1, maximum: 5 },
+          imageUrl: { type: 'string' }, // ✅ Add this
+          grade: { type: 'string' }, // ✅ Add this
+          subject: { type: 'string' } // ✅ Add this
         },
         required: ['stem', 'kind', 'answerKey', 'topics', 'difficulty']
       }
     }
   }, async (request, reply) => {
     const questionData = request.body as any;
+
+    console.log('📸 Creating question with data:', {
+      hasImage: !!questionData.imageUrl,
+      imageUrl: questionData.imageUrl,
+      optionsWithImages: questionData.options?.filter((opt: any) => opt.imageUrl).length || 0
+    });
 
     const question = new Question(questionData);
     await question.save();

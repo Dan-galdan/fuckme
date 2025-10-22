@@ -12,9 +12,6 @@ function TestPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Debug logging
-    console.log('🔍 TestPage mounted, testId:', testId);
-
     useEffect(() => {
         fetchTest();
     }, [testId]);
@@ -79,34 +76,15 @@ function TestPage() {
 
             console.log('🔍 Submission result:', result);
 
-            // ✅ FIXED: Properly calculate correct answers
             let correctAnswers = 0;
             let totalQuestions = test.questions.length;
 
             if (result.items && Array.isArray(result.items)) {
-                // Count correct answers from the result items
                 correctAnswers = result.items.filter(item => item.correct === true).length;
-                console.log('🔍 Correct answers calculation:', {
-                    totalItems: result.items.length,
-                    correctCount: correctAnswers,
-                    items: result.items.map(item => ({ correct: item.correct, score: item.score }))
-                });
             } else {
-                // Fallback: if items array is not available, estimate from totalScore
                 correctAnswers = Math.round((result.totalScore / 100) * totalQuestions);
-                console.log('🔍 Using fallback calculation:', {
-                    totalScore: result.totalScore,
-                    estimatedCorrect: correctAnswers
-                });
             }
 
-            console.log('🔍 Final stats:', {
-                correct: correctAnswers,
-                total: totalQuestions,
-                score: result.totalScore
-            });
-
-            // Navigate to dashboard with correct answers data
             navigate('/dashboard', {
                 state: {
                     testCompleted: true,
@@ -126,7 +104,6 @@ function TestPage() {
         }
     }
 
-    // ✅ FIXED: Moved the JSX return outside of handleSubmitTest function
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-gray-900 dark:to-black flex items-center justify-center">
@@ -155,11 +132,26 @@ function TestPage() {
     }
 
     const question = test.questions[currentQuestion];
+    // Add this right after const question = test.questions[currentQuestion];
+    // ADD THIS DEBUGGING CODE:
+    console.log('🖼️ IMAGE DEBUG:', {
+        questionId: question.id,
+        questionStem: question.stem,
+        hasQuestionImage: !!question.imageUrl,
+        questionImageUrl: question.imageUrl,
+        options: question.options?.map(opt => ({
+            text: opt.text,
+            hasOptionImage: !!opt.imageUrl,
+            optionImageUrl: opt.imageUrl
+        }))
+    });
 
+    // Also add this to check the entire test structure:
+    console.log('📋 FULL TEST STRUCTURE:', test);
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-gray-900 dark:to-black py-8">
             <div className="max-w-4xl mx-auto px-6">
-                {/* Test Header - Google Forms Style */}
+                {/* Test Header */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
                     <div className="flex justify-between items-start mb-4">
                         <div>
@@ -179,7 +171,6 @@ function TestPage() {
                         )}
                     </div>
 
-                    {/* Progress Bar */}
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div
                             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
@@ -191,14 +182,24 @@ function TestPage() {
                     </div>
                 </div>
 
-                {/* Question Card - Google Forms Style */}
+                {/* Question Card */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
                     <div className="mb-6">
                         <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
                             {question.stem}
                         </h2>
 
-                        {/* Question Type Indicator */}
+                        {/* ADDED: Question Image Display */}
+                        {question.imageUrl && (
+                            <div className="my-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <img
+                                    src={question.imageUrl}
+                                    alt="Question diagram"
+                                    className="max-w-full max-h-64 object-contain mx-auto"
+                                />
+                            </div>
+                        )}
+
                         <div className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm px-3 py-1 rounded-full mb-4">
                             {question.kind === 'mcq' && 'Олон сонголттой'}
                             {question.kind === 'numeric' && 'Тоон хариулт'}
@@ -206,7 +207,7 @@ function TestPage() {
                         </div>
                     </div>
 
-                    {/* Answer Options - Google Forms Style */}
+                    {/* Answer Options */}
                     <div className="space-y-3">
                         {question.kind === 'mcq' && question.options?.map((option, index) => (
                             <label
@@ -232,7 +233,17 @@ function TestPage() {
                                         <div className="w-2 h-2 rounded-full bg-white"></div>
                                     )}
                                 </div>
-                                <span className="text-slate-700 dark:text-gray-300">{option.text}</span>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-slate-700 dark:text-gray-300">{option.text}</span>
+                                    {/* ADDED: Option Image Display */}
+                                    {option.imageUrl && (
+                                        <img
+                                            src={option.imageUrl}
+                                            alt={`Option ${index + 1}`}
+                                            className="max-w-16 max-h-16 object-contain border rounded"
+                                        />
+                                    )}
+                                </div>
                             </label>
                         ))}
 
