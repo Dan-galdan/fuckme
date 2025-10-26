@@ -120,6 +120,17 @@ export default async function adminRoutes(fastify: FastifyInstance) {
       message: 'Test created successfully'
     };
   });
+  fastify.delete('/tests/:testId', async (request, reply) => {
+    const { testId } = request.params as any;
+
+    console.log('🗑️ Deleting test:', testId);
+
+    // Soft delete (set inactive)
+    await Test.findByIdAndUpdate(testId, { isActive: false });
+
+    return { message: 'Test deleted successfully' };
+  });
+
   // Add this route to your existing adminRoutes function
   // Get all tests (ADD THIS BEFORE OR AFTER THE STATS ENDPOINT)
   fastify.get('/tests', async (request, reply) => {

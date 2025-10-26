@@ -256,7 +256,6 @@ function AdminPage() {
       setIsLoading(false);
     }
   }
-
   // Add option management functions
   const addOption = () => {
     const newOptions = [...questionForm.options, {

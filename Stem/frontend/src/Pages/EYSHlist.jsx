@@ -207,7 +207,7 @@ function EYSHlist({ hicheel }) {
               </div>
             ))
           ) : (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-12 te xt-gray-500 dark:text-gray-400">
               {tests.length === 0 ? 'Сорил байхгүй байна' : 'Бодлого/сорил олдсонгүй'}
             </div>
           )}

@@ -195,6 +195,11 @@ class ApiClient {
   async getAdminStats() {
     return this.request('/admin/stats/overview');
   }
+  async deleteTest(testId: string) {
+    return this.request(`/admin/tests/${testId}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const apiClient = new ApiClient();
