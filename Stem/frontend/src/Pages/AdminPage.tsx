@@ -204,9 +204,18 @@ function AdminPage() {
         topics: questionForm.topics.split(',').map((t) => t.trim()).filter(Boolean),
         difficulty: Number(questionForm.difficulty),
         imageUrl: questionForm.imageUrl, // ✅ Include image URL
-        grade: questionForm.grade, // ✅ Include grade
-        subject: questionForm.subject // ✅ Include subject
+        grade: questionForm.grade,
+        subject: questionForm.subject
       };
+
+      // ✅ ADD DEBUGGING FOR IMAGES
+      console.log('🖼️ ADMIN - Creating question with images:', {
+        questionImage: questionForm.imageUrl,
+        optionsWithImages: questionForm.options.filter(opt => opt.imageUrl).map(opt => ({
+          text: opt.text,
+          imageUrl: opt.imageUrl
+        }))
+      });
 
       // Handle different question types
       if (questionForm.kind === 'mcq') {

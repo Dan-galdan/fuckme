@@ -170,10 +170,16 @@ class ApiClient {
     });
   }
 
-  async createQuestion(data: any) {
-    return this.request('/admin/questions', {
+  // In your api/client.ts
+  async createQuestion(questionData: any) {
+    console.log('🖼️ API CLIENT - Sending question with images:', {
+      hasQuestionImage: !!questionData.imageUrl,
+      optionsWithImages: questionData.options?.filter((opt: any) => opt.imageUrl).length || 0
+    });
+
+    return this.request('/questions', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(questionData)
     });
   }
 

@@ -189,13 +189,17 @@ function TestPage() {
                             {question.stem}
                         </h2>
 
-                        {/* ADDED: Question Image Display */}
                         {question.imageUrl && (
                             <div className="my-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                 <img
                                     src={question.imageUrl}
                                     alt="Question diagram"
                                     className="max-w-full max-h-64 object-contain mx-auto"
+                                    onError={(e) => {
+                                        console.error('🖼️ Question image failed to load:', question.imageUrl);
+                                        e.target.style.display = 'none';
+                                    }}
+                                    onLoad={() => console.log('🖼️ Question image loaded successfully:', question.imageUrl)}
                                 />
                             </div>
                         )}
@@ -212,7 +216,7 @@ function TestPage() {
                         {question.kind === 'mcq' && question.options?.map((option, index) => (
                             <label
                                 key={option.id}
-                                className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${answers[question.id] === option.id
+                                className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${answers[question.id] === option.id
                                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                                     : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                                     }`}
@@ -225,7 +229,7 @@ function TestPage() {
                                     onChange={() => handleAnswerChange(question.id, option.id)}
                                     className="hidden"
                                 />
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3 ${answers[question.id] === option.id
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3 mt-1 ${answers[question.id] === option.id
                                     ? 'border-blue-500 bg-blue-500'
                                     : 'border-gray-400 dark:border-gray-500'
                                     }`}>
@@ -233,16 +237,30 @@ function TestPage() {
                                         <div className="w-2 h-2 rounded-full bg-white"></div>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-slate-700 dark:text-gray-300">{option.text}</span>
-                                    {/* ADDED: Option Image Display */}
-                                    {option.imageUrl && (
-                                        <img
-                                            src={option.imageUrl}
-                                            alt={`Option ${index + 1}`}
-                                            className="max-w-16 max-h-16 object-contain border rounded"
-                                        />
-                                    )}
+
+                                {/* ✅ UPDATED: Better option content layout */}
+                                <div className="flex-1">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                        <span className="text-slate-700 dark:text-gray-300 flex-1">
+                                            {option.text}
+                                        </span>
+
+                                        {/* ✅ UPDATED: Option Image Display with better styling */}
+                                        {option.imageUrl && (
+                                            <div className="flex-shrink-0">
+                                                <img
+                                                    src={option.imageUrl}
+                                                    alt={`Option ${index + 1}`}
+                                                    className="max-w-24 max-h-24 object-contain border rounded-lg shadow-sm"
+                                                    onError={(e) => {
+                                                        console.error('🖼️ Image failed to load:', option.imageUrl);
+                                                        e.target.style.display = 'none';
+                                                    }}
+                                                    onLoad={() => console.log('🖼️ Image loaded successfully:', option.imageUrl)}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </label>
                         ))}

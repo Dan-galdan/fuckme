@@ -14,6 +14,7 @@ import paymentRoutes from './modules/payments/routes.js';
 import recommendationRoutes from './modules/recommendations/routes.js';
 import adminRoutes from './modules/admin/routes.js';
 import webhookRoutes from './modules/webhooks/routes.js';
+import questionRoutes from './modules/questions/routes.js';
 
 const fastify = Fastify({
   logger: {
@@ -78,7 +79,7 @@ await fastify.register(paymentRoutes, { prefix: '/api/payments' });
 await fastify.register(recommendationRoutes, { prefix: '/api/recommendations' });
 await fastify.register(adminRoutes, { prefix: '/api/admin' });
 await fastify.register(webhookRoutes, { prefix: '/api/webhooks' });
-
+await fastify.register(questionRoutes, { prefix: '/api/questions' });
 // Error handler
 fastify.setErrorHandler((error, request, reply) => {
   fastify.log.error(error);

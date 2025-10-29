@@ -332,37 +332,56 @@ export default async function testRoutes(fastify: FastifyInstance) {
 
     console.log('🔍 Found test:', test.title, 'with', test.questionRefs.length, 'questions');
 
-    // Return the actual test with its questions
+    // Enhanced debugging for images
+    const questionsWithImages = test.questionRefs.map((ref: any) => {
+      const question = ref.questionId;
+
+      console.log('🖼️ BACKEND - Full Question Data:', {
+        id: question._id.toString(),
+        stem: question.stem.substring(0, 50) + '...',
+        hasQuestionImage: !!question.imageUrl,
+        questionImageUrl: question.imageUrl,
+        optionsCount: question.options?.length || 0,
+        optionsWithImages: question.options?.map((opt: any) => ({
+          id: opt.id,
+          text: opt.text,
+          hasImage: !!opt.imageUrl,
+          imageUrl: opt.imageUrl
+        })) || []
+      });
+
+      return {
+        id: question._id.toString(),
+        stem: question.stem,
+        kind: question.kind,
+        options: question.options?.map((opt: any) => ({
+          id: opt.id,
+          text: opt.text,
+          imageUrl: opt.imageUrl
+        })) || [],
+        difficulty: question.difficulty,
+        topics: question.topics,
+        imageUrl: question.imageUrl
+      };
+    });
+
+    // Log overall test image stats
+    const totalQuestionsWithImages = questionsWithImages.filter(q => q.imageUrl).length;
+    const totalOptionsWithImages = questionsWithImages.reduce((total, q) =>
+      total + (q.options?.filter(opt => opt.imageUrl).length || 0), 0);
+
+    console.log('📊 TEST IMAGE SUMMARY:', {
+      totalQuestions: questionsWithImages.length,
+      questionsWithImages: totalQuestionsWithImages,
+      optionsWithImages: totalOptionsWithImages
+    });
+
     return {
       id: (test._id as any).toString(),
       title: test.title,
       description: test.description,
       timeLimitSec: test.timeLimitSec,
-      questions: test.questionRefs.map((ref: any) => {
-        const question = ref.questionId;
-
-        // ✅ ADD DEBUGGING TO SEE IF IMAGE EXISTS
-        console.log('🖼️ Backend - Question image data:', {
-          id: question._id.toString(),
-          hasImage: !!question.imageUrl,
-          imageUrl: question.imageUrl,
-          optionsWithImages: question.options?.filter((opt: any) => opt.imageUrl).length || 0
-        });
-
-        return {
-          id: question._id.toString(),
-          stem: question.stem,
-          kind: question.kind,
-          options: question.options?.map((opt: any) => ({
-            id: opt.id,
-            text: opt.text,
-            imageUrl: opt.imageUrl // ✅ ADD THIS LINE
-          })) || [],
-          difficulty: question.difficulty,
-          topics: question.topics,
-          imageUrl: question.imageUrl // ✅ ADD THIS LINE
-        };
-      })
+      questions: questionsWithImages
     };
   });
 

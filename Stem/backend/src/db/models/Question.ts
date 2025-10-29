@@ -6,15 +6,15 @@ export interface IQuestion extends Document {
   options?: Array<{
     id: string;
     text: string;
-    isCorrect?: boolean;
-    imageUrl?: string; // ✅ Add this
+    isCorrect: boolean;
+    imageUrl?: string; // ✅ Make sure this exists
   }>;
-  answerKey: number | string | RegExp;
+  answerKey: any;
   topics: string[];
   difficulty: number;
-  imageUrl?: string; // ✅ Add this
-  grade?: string;
-  subject?: string;
+  imageUrl?: string; // ✅ Make sure this exists for question images
+  grade: string;
+  subject: string;
 }
 
 const QuestionSchema = new Schema<IQuestion>({
@@ -23,15 +23,15 @@ const QuestionSchema = new Schema<IQuestion>({
   options: [{
     id: { type: String, required: true },
     text: { type: String, required: true },
-    isCorrect: { type: Boolean },
-    imageUrl: { type: String } // ✅ Add this
+    isCorrect: { type: Boolean, required: true },
+    imageUrl: { type: String } // ✅ Make sure this exists
   }],
   answerKey: { type: Schema.Types.Mixed, required: true },
-  topics: { type: [String], required: true },
+  topics: [{ type: String, required: true }],
   difficulty: { type: Number, required: true, min: 1, max: 5 },
-  imageUrl: { type: String }, // ✅ Add this
-  grade: { type: String },
-  subject: { type: String }
+  imageUrl: { type: String }, // ✅ Make sure this exists
+  grade: { type: String, required: true },
+  subject: { type: String, required: true }
 });
 
 export const Question = mongoose.model<IQuestion>('Question', QuestionSchema);
